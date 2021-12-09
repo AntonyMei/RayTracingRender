@@ -11,7 +11,7 @@ class Ray {
 public:
     Ray() : o(), d() {}
 
-    Ray(const Point3 &origin, const Vector3d &direction) : o(origin), d(normalize(direction)) {}
+    Ray(const Point3 &origin, const Vector3d &direction) : o(origin), d(direction) {}
 
     // utils
     Point3 origin() const { return o; }
