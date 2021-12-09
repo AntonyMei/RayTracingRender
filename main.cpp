@@ -2,14 +2,20 @@
 // Created by meiyixuan on 2021-12-09.
 //
 #include <iostream>
-#include "Vector3d.h"
+#include <vector>
+#include "src/Vector3d.h"
+#include "src/Pixel.h"
 
 int main() {
 
     // Image
-
     const int image_width = 256;
     const int image_height = 256;
+    auto image = std::vector<std::vector<Pixel>>();
+    for (int idx = 0; idx < image_height; ++idx) {
+        auto row = std::vector<Pixel>(image_width);
+        image.push_back(std::move(row));
+    }
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
@@ -20,12 +26,8 @@ int main() {
             auto r = double(i) / (image_width-1);
             auto g = double(j) / (image_height-1);
             auto b = 0.25;
-
-            int ir = static_cast<int>(255.999 * r);
-            int ig = static_cast<int>(255.999 * g);
-            int ib = static_cast<int>(255.999 * b);
-
-            std::cout << ir << ' ' << ig << ' ' << ib << '\n';
+            image[j][i].set(Color(r, g, b));
+            image[j][i].write();
         }
     }
     std::cerr << "\nDone.\n";

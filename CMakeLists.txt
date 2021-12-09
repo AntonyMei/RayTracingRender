@@ -4,4 +4,4 @@ project(Project)
 set(CMAKE_CXX_STANDARD 14)
 
 add_executable(Project
-        main.cpp)
+        main.cpp src/Pixel.h)
