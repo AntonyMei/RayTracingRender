@@ -5,6 +5,7 @@
 #include <vector>
 #include "src/Vector3d.h"
 #include "src/Pixel.h"
+#include "src/Ray.h"
 
 int main() {
 
