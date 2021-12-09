@@ -7,20 +7,27 @@
 #include "src/Pixel.h"
 #include "src/Ray.h"
 
-bool hit_sphere(const Point &center, double radius, const Ray &r) {
+double hit_sphere(const Point &center, double radius, const Ray &r) {
     Vector3d oc = r.origin() - center;
     auto a = dot(r.direction(), r.direction());
     auto b = 2.0 * dot(oc, r.direction());
     auto c = dot(oc, oc) - radius * radius;
     auto discriminant = b * b - 4 * a * c;
-    return (discriminant > 0);
+    if (discriminant < 0) {
+        return -1.0;
+    } else {
+        return (-b - sqrt(discriminant)) / (2.0 * a);
+    }
 }
 
 Color ray_color(const Ray &r) {
-    if (hit_sphere(Point(0, 0, -1), 0.5, r))
-        return {1, 0, 0};
+    auto t = hit_sphere(Point(0, 0, -1), 0.5, r);
+    if (t > 0.0) {
+        Vector3d N = normalize(r.at(t) - Vector3d(0, 0, -1));
+        return 0.5 * Color(N.x() + 1, N.y() + 1, N.z() + 1);
+    }
     Vector3d unit_direction = normalize(r.direction());
-    auto t = 0.5 * (unit_direction.y() + 1.0);
+    t = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
 }
 
@@ -28,7 +35,7 @@ int main() {
 
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 400;
+    const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
