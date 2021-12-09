@@ -56,10 +56,10 @@ public:
     double &operator[](int i) { return val[i]; }
 
     double length() const {
-        return std::sqrt(length_squared());
+        return std::sqrt(squared_length());
     }
 
-    double length_squared() const {
+    double squared_length() const {
         return val[0] * val[0] + val[1] * val[1] + val[2] * val[2];
     }
 
@@ -83,7 +83,7 @@ private:
     friend inline Vector3d cross(const Vector3d &u, const Vector3d &v);
 };
 
-using Point3 = Vector3d;   // 3D point
+using Point = Vector3d;   // 3D point
 using Color = Vector3d;    // RGB color
 
 inline std::ostream &operator<<(std::ostream &out, const Vector3d &v) {
