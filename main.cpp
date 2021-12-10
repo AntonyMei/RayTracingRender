@@ -4,35 +4,14 @@
 #include "src/const.h"
 
 #include <iostream>
-#include <vector>
-#include "src/Vector3d.h"
-#include "src/Pixel.h"
-#include "src/Ray.h"
-#include "src/Hittable.h"
-#include "src/Accelerator.h"
 
-double hit_sphere(const Point& center, double radius, const Ray& r) {
-    Vector3d oc = r.origin() - center;
-    auto a = r.direction().squared_length();
-    auto half_b = dot(oc, r.direction());
-    auto c = oc.squared_length() - radius*radius;
-    auto discriminant = half_b*half_b - a*c;
-
-    if (discriminant < 0) {
-        return -1.0;
-    } else {
-        return (-half_b - sqrt(discriminant) ) / a;
-    }
-}
-
-Color ray_color(const Ray &r) {
-    auto t = hit_sphere(Point(0, 0, -1), 0.5, r);
-    if (t > 0.0) {
-        Vector3d N = normalize(r.at(t) - Vector3d(0, 0, -1));
-        return 0.5 * Color(N.x() + 1, N.y() + 1, N.z() + 1);
+Color ray_color(const Ray &r, const Accelerator &world) {
+    Hit hit;
+    if (world.intersect(r, 0, inf, hit)) {
+        return 0.5 * (hit.normal + Color(1, 1, 1));
     }
     Vector3d unit_direction = normalize(r.direction());
-    t = 0.5 * (unit_direction.y() + 1.0);
+    auto t = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
 }
 
@@ -47,6 +26,11 @@ int main() {
         auto row = std::vector<Pixel>(image_width);
         image.push_back(std::move(row));
     }
+
+    // World
+    HittableList world;
+    world.add(make_shared<Sphere>(Point(0,0,-1), 0.5));
+    world.add(make_shared<Sphere>(Point(0,-100.5,-1), 100));
 
     // Camera
     auto viewport_height = 2.0;
@@ -67,7 +51,7 @@ int main() {
             auto u = double(i) / (image_width - 1);
             auto v = double(j) / (image_height - 1);
             Ray r(origin, lower_left_corner + u * horizontal + v * vertical - origin);
-            Color pixel_color = ray_color(r);
+            Color pixel_color = ray_color(r, world);
             image[j][i].set(pixel_color);
             image[j][i].write();
         }

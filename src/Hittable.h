@@ -49,7 +49,7 @@ public:
         if (discriminant < 0) return false;
         auto sqrt_d = sqrt(discriminant);
 
-        // fill hit
+        // fill intersect
         auto root = (-_b - sqrt_d) / _a;
         if (root > t_min && root < t_max) {
             // small root is fine

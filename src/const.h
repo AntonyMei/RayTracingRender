@@ -9,9 +9,12 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <vector>
 
 #include "Ray.h"
 #include "Vector3d.h"
+#include "Accelerator.h"
+#include "Pixel.h"
 
 // memory
 using std::shared_ptr;

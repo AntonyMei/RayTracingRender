@@ -6,8 +6,9 @@
 #ifndef PROJECT_ACCELERATOR_H
 #define PROJECT_ACCELERATOR_H
 
-#include "memory"
-#include "vector"
+#include <memory>
+#include <vector>
+#include "Hittable.h"
 
 using std::shared_ptr;
 using std::make_shared;
@@ -20,8 +21,8 @@ public:
     // add object to data storage
     virtual void add(shared_ptr<Hittable> obj) = 0;
 
-    // check if a hit happens
-    virtual bool hit(const Ray &r, double t_min, double t_max, Hit &rec) const = 0;
+    // check if an intersection happens
+    virtual bool intersect(const Ray &r, double t_min, double t_max, Hit &rec) const = 0;
 };
 
 class HittableList : public Accelerator {
@@ -32,13 +33,13 @@ public:
 
     void add(shared_ptr<Hittable> obj) override { hittable_list.push_back(obj); }
 
-    bool hit(const Ray &r, double t_min, double t_max, Hit &hit) const override {
+    bool intersect(const Ray &r, double t_min, double t_max, Hit &hit) const override {
         // initialize
         Hit obj_hit;
         bool has_hit = false;
         auto closest_t = t_max;
 
-        // check hit status
+        // check intersect status
         for (const auto &hittable: hittable_list) {
             if (hittable->hit(r, t_min, closest_t, obj_hit)) {
                 has_hit = true;
