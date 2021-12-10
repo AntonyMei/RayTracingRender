@@ -7,16 +7,17 @@
 #include "src/Pixel.h"
 #include "src/Ray.h"
 
-double hit_sphere(const Point &center, double radius, const Ray &r) {
+double hit_sphere(const Point& center, double radius, const Ray& r) {
     Vector3d oc = r.origin() - center;
-    auto a = dot(r.direction(), r.direction());
-    auto b = 2.0 * dot(oc, r.direction());
-    auto c = dot(oc, oc) - radius * radius;
-    auto discriminant = b * b - 4 * a * c;
+    auto a = r.direction().squared_length();
+    auto half_b = dot(oc, r.direction());
+    auto c = oc.squared_length() - radius*radius;
+    auto discriminant = half_b*half_b - a*c;
+
     if (discriminant < 0) {
         return -1.0;
     } else {
-        return (-b - sqrt(discriminant)) / (2.0 * a);
+        return (-half_b - sqrt(discriminant) ) / a;
     }
 }
 
@@ -35,7 +36,7 @@ int main() {
 
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 800;
+    const int image_width = 1920;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
