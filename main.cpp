@@ -7,7 +7,8 @@
 
 Color ray_color(const Ray &r, const Accelerator &world) {
     Hit hit;
-    if (world.intersect(r, 0, inf, hit)) {
+    // Note that we only shade front faces
+    if (world.intersect(r, 0, inf, hit) && hit.front_face) {
         return 0.5 * (hit.normal + Color(1, 1, 1));
     }
     Vector3d unit_direction = normalize(r.direction());
@@ -19,7 +20,7 @@ int main() {
 
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 600;
+    const int image_width = 1920;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
