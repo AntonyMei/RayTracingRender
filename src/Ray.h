@@ -1,5 +1,6 @@
 //
 // Created by meiyixuan on 2021-12-09.
+// This file contains the definition of Ray.
 //
 
 #ifndef PROJECT_RAY_H

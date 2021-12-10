@@ -1,5 +1,6 @@
 //
 // Created by meiyixuan on 2021-12-10.
+// This file contains all hittable objects.
 //
 
 #ifndef PROJECT_HITTABLE_H
@@ -14,7 +15,7 @@ struct Hit {
     double t{0};
     bool front_face{false};
 
-    inline void set_face_normal(const Ray& r, const Vector3d& n) {
+    inline void set_face_normal(const Ray &r, const Vector3d &n) {
         front_face = (dot(r.direction(), n) < 0);
         normal = front_face ? n : -n;
     }

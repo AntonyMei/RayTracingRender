@@ -1,5 +1,6 @@
 //
 // Created by meiyixuan on 2021-12-09.
+// Basic math class for vector operations.
 //
 
 #ifndef PROJECT_VECTOR3D_H
