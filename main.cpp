@@ -7,7 +7,7 @@
 #include "src/Pixel.h"
 #include "src/Ray.h"
 #include "src/Hittable.h"
-#include "src/Aggregate.h"
+#include "src/Accelerator.h"
 
 double hit_sphere(const Point& center, double radius, const Ray& r) {
     Vector3d oc = r.origin() - center;
