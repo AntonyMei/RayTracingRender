@@ -57,7 +57,6 @@ int main() {
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-
     for (int j = image_height - 1; j >= 0; --j) {
         std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < image_width; ++i) {
@@ -68,10 +67,16 @@ int main() {
                 Ray r = cam.get_ray(u, v);
                 pixel_color += ray_color(r, world, max_depth);
             }
-            Pixel pixel;
-            pixel.set(pixel_color, samples_per_pixel);
-            pixel.write();
+            image[j][i].set(pixel_color, samples_per_pixel);
         }
     }
+
+    // output
+    for (int j = image_height - 1; j >= 0; --j) {
+        for (int i = 0; i < image_width; ++i) {
+            image[j][i].write();
+        }
+    }
+
     std::cerr << "\nDone.\n";
 }
