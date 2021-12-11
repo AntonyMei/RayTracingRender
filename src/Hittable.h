@@ -7,10 +7,14 @@
 #define PROJECT_HITTABLE_H
 
 #include <cmath>
+#include <utility>
+
+class Material;
 
 struct Hit {
     Point hit_point;
     Vector3d normal;
+    std::shared_ptr<Material> mat_ptr;
     double t{0};
     bool front_face{false};
 
@@ -23,7 +27,14 @@ struct Hit {
 // base class for all hittable objects
 class Hittable {
 public:
+    Hittable() : mat_ptr(nullptr) {}
+
+    explicit Hittable(std::shared_ptr<Material> m) : mat_ptr(std::move(m)) {}
+
     virtual bool hit(const Ray &r, double t_min, double t_max, Hit &rec) const = 0;
+
+protected:
+    shared_ptr<Material> mat_ptr;
 };
 
 class Sphere : public Hittable {
@@ -31,7 +42,8 @@ public:
     // constructors
     Sphere() : r{0} {}
 
-    Sphere(Point center, double radius) : c{center}, r{radius} {};
+    Sphere(Point center, double radius, std::shared_ptr<Material> m) : Hittable(std::move(m)),
+                                                                       c{center}, r{radius} {};
 
     // utilities
     Point center() const { return c; }
@@ -56,6 +68,7 @@ public:
             hit.hit_point = ray.at(root);
             Vector3d normal = (hit.hit_point - c) / r;
             hit.set_face_normal(ray, normal);
+            hit.mat_ptr = mat_ptr;
             return true;
         } else {
             // may use larger root

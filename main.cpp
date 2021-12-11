@@ -13,6 +13,7 @@
 #include "src/Camera.h"
 #include "src/Hittable.h"
 #include "src/Accelerator.h"
+#include "src/Material.h"
 
 Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
     Hit hit;
@@ -22,7 +23,7 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
         return {0, 0, 0};
 
     // check intersection
-    if (world.intersect(r, t_min, inf, hit)) {
+    if (world.intersect(r, TMIN, inf, hit)) {
         // use 3rd diffuse model
         Point target = hit.hit_point + hit.normal + random_in_hemisphere(hit.normal);
         return 0.5 * ray_color(Ray(hit.hit_point, target - hit.hit_point), world,
