@@ -11,4 +11,27 @@ public:
                          std::vector<Ray> &scattered_rays) const = 0;
 };
 
+class Lambertian : public Material {
+public:
+    explicit Lambertian(const Color &a) : albedo(a) {}
+
+    Color get_albedo() { return albedo; }
+
+    bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
+                 std::vector<Ray> &scattered_rays) const override {
+        // get scatter direction
+        auto scatter_direction = hit.normal + random_unit_vector();
+        if (scatter_direction.near_zero())
+            scatter_direction = hit.normal;
+
+        // generate scattered rays
+        scattered_rays.emplace_back(hit.hit_point, scatter_direction);
+        attenuation = albedo;
+        return true;
+    }
+
+private:
+    Color albedo;
+};
+
 #endif //PROJECT_MATERIAL_H

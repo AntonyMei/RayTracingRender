@@ -72,6 +72,12 @@ public:
         return {random_double(min, max), random_double(min, max), random_double(min, max)};
     }
 
+    bool near_zero() const {
+        // Return true if the vector is close to zero in all dimensions.
+        const auto s = 1e-8;
+        return (fabs(val[0]) < s) && (fabs(val[1]) < s) && (fabs(val[2]) < s);
+    }
+
 private:
 
     double val[3];
