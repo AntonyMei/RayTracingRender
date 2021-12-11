@@ -146,4 +146,8 @@ Vector3d random_in_unit_sphere() {
     }
 }
 
+Vector3d random_unit_vector() {
+    return normalize(random_in_unit_sphere());
+}
+
 #endif //PROJECT_VECTOR3D_H
