@@ -150,4 +150,12 @@ Vector3d random_unit_vector() {
     return normalize(random_in_unit_sphere());
 }
 
+Vector3d random_in_hemisphere(const Vector3d& normal) {
+    Vector3d in_unit_sphere = random_in_unit_sphere();
+    if (dot(in_unit_sphere, normal) > 0.0)
+        return in_unit_sphere;
+    else
+        return -in_unit_sphere;
+}
+
 #endif //PROJECT_VECTOR3D_H

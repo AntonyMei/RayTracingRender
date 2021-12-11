@@ -23,7 +23,8 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
 
     // check intersection
     if (world.intersect(r, t_min, inf, hit)) {
-        Point target = hit.hit_point + hit.normal + random_unit_vector();
+        // use 3rd diffuse model
+        Point target = hit.hit_point + hit.normal + random_in_hemisphere(hit.normal);
         return 0.5 * ray_color(Ray(hit.hit_point, target - hit.hit_point), world,
                                remaining_bounce - 1);
     }
