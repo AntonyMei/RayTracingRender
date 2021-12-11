@@ -15,7 +15,7 @@
 #include "Ray.h"
 #include "Vector3d.h"
 #include "Accelerator.h"
-#include "Pixel.h"
+#include "Camera.h"
 
 // memory
 using std::shared_ptr;
@@ -28,6 +28,12 @@ const double pi = 3.1415926535897932385;
 
 inline double deg2rad(double deg) {
     return deg * pi / 180.0;
+}
+
+inline double clamp(double x, double min, double max) {
+    if (x < min) return min;
+    if (x > max) return max;
+    return x;
 }
 
 // random

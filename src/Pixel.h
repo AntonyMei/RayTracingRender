@@ -7,14 +7,20 @@
 #define PROJECT_PIXEL_H
 
 #include "Vector3d.h"
+#include "Utils.h"
 
 class Pixel {
 public:
-    Pixel() : pixel_color(), write_flag(false) {}
+    Pixel() : pixel_color(), write_flag(false), sample_count(1) {}
 
-    void set(const Color &color) { pixel_color = color; }
+    void set(const Color &color, int samples_per_pixel) {
+        pixel_color = color;
+        sample_count = samples_per_pixel;
+    }
 
-    Color get() { return pixel_color; }
+    Color get_color() const { return pixel_color; }
+
+    int get_sample_count() const { return sample_count; }
 
     void write() {
         // a pixel can only be written once for correctness
@@ -25,14 +31,16 @@ public:
         }
 
         // scale to [0, 255]
-        std::cout << static_cast<int>(255.999 * pixel_color.x()) << ' '
-                  << static_cast<int>(255.999 * pixel_color.y()) << ' '
-                  << static_cast<int>(255.999 * pixel_color.z()) << '\n';
+        pixel_color *= 1.0 / sample_count;
+        std::cout << static_cast<int>(256 * clamp(pixel_color.x(), 0.0, 0.999)) << ' '
+                  << static_cast<int>(256 * clamp(pixel_color.y(), 0.0, 0.999)) << ' '
+                  << static_cast<int>(256 * clamp(pixel_color.z(), 0.0, 0.999)) << '\n';
     }
 
 private:
     bool write_flag;
     Color pixel_color;
+    int sample_count;
 };
 
 #endif //PROJECT_PIXEL_H
