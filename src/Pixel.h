@@ -27,11 +27,19 @@ public:
             throw std::runtime_error("A pixel is written twice");
         }
 
-        // scale to [0, 255]
-        pixel_color *= 1.0 / sample_count;
-        std::cout << static_cast<int>(256 * clamp(pixel_color.x(), 0.0, 0.999)) << ' '
-                  << static_cast<int>(256 * clamp(pixel_color.y(), 0.0, 0.999)) << ' '
-                  << static_cast<int>(256 * clamp(pixel_color.z(), 0.0, 0.999)) << '\n';
+        // divide by sample count and gamma correct
+        auto r = pixel_color.x();
+        auto g = pixel_color.y();
+        auto b = pixel_color.z();
+        auto scale = 1.0 / sample_count;
+        r = sqrt(scale * r);
+        g = sqrt(scale * g);
+        b = sqrt(scale * b);
+
+        // scale to [0, 255] and output
+        std::cout << static_cast<int>(256 * clamp(r, 0.0, 0.999)) << ' '
+                  << static_cast<int>(256 * clamp(g, 0.0, 0.999)) << ' '
+                  << static_cast<int>(256 * clamp(b, 0.0, 0.999)) << '\n';
     }
 
 private:
