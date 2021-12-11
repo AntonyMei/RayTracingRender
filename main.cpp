@@ -51,8 +51,9 @@ int main() {
 
     // World
     HittableList world;
-    world.add(make_shared<Sphere>(Point(0, 0, -1), 0.5));
-    world.add(make_shared<Sphere>(Point(0, -100.5, -1), 100));
+    auto material_center = make_shared<Lambertian>(Color(0.7, 0.3, 0.3));
+    world.add(make_shared<Sphere>(Point(0, 0, -1), 0.5, material_center));
+    world.add(make_shared<Sphere>(Point(0, -100.5, -1), 100, material_center));
 
     // Camera
     SimpleCamera cam;
