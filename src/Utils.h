@@ -12,10 +12,6 @@
 #include <vector>
 #include <random>
 
-#include "Ray.h"
-#include "Vector3d.h"
-#include "Accelerator.h"
-#include "Camera.h"
 
 // memory
 using std::shared_ptr;

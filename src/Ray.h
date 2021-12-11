@@ -6,8 +6,6 @@
 #ifndef PROJECT_RAY_H
 #define PROJECT_RAY_H
 
-#include "Vector3d.h"
-
 class Ray {
 public:
     Ray() : o(), d() {}

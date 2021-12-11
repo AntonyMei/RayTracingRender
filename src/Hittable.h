@@ -6,7 +6,6 @@
 #ifndef PROJECT_HITTABLE_H
 #define PROJECT_HITTABLE_H
 
-#include "Ray.h"
 #include <cmath>
 
 struct Hit {

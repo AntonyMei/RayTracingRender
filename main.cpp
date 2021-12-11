@@ -1,9 +1,18 @@
 //
 // Created by meiyixuan on 2021-12-09.
 //
-#include "src/Utils.h"
-#include "src/Pixel.h"
 #include <iostream>
+
+// basic utilities
+#include "src/Utils.h"
+#include "src/Vector3d.h"
+#include "src/Ray.h"
+
+// classes
+#include "src/Pixel.h"
+#include "src/Camera.h"
+#include "src/Hittable.h"
+#include "src/Accelerator.h"
 
 Color ray_color(const Ray &r, const Accelerator &world) {
     Hit hit;
@@ -22,7 +31,7 @@ int main() {
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 100;
+    const int samples_per_pixel = 10;
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
         auto row = std::vector<Pixel>(image_width);

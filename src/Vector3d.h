@@ -9,7 +9,6 @@
 #include <cmath>
 #include <iostream>
 
-
 class Vector3d {
 public:
     // constructors
@@ -63,6 +62,12 @@ public:
     double squared_length() const {
         return val[0] * val[0] + val[1] * val[1] + val[2] * val[2];
     }
+
+    // utils
+    inline static Vector3d random() {
+        return Vector3d(random_double(), random_double(), random_double());
+    }
+
 
 private:
 

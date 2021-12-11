@@ -6,9 +6,6 @@
 #ifndef PROJECT_PIXEL_H
 #define PROJECT_PIXEL_H
 
-#include "Vector3d.h"
-#include "Utils.h"
-
 class Pixel {
 public:
     Pixel() : pixel_color(), write_flag(false), sample_count(1) {}
