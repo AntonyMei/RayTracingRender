@@ -22,7 +22,7 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
         return {0, 0, 0};
 
     // check intersection
-    if (world.intersect(r, 0, inf, hit)) {
+    if (world.intersect(r, t_min, inf, hit)) {
         Point target = hit.hit_point + hit.normal + random_in_unit_sphere();
         return 0.5 * ray_color(Ray(hit.hit_point, target - hit.hit_point), world,
                                remaining_bounce - 1);
