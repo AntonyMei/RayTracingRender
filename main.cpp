@@ -34,7 +34,7 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
 }
 
 int main() {
-
+    // removed threading
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 800;
