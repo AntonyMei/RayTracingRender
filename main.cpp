@@ -2,6 +2,7 @@
 // Created by meiyixuan on 2021-12-09.
 //
 #include <iostream>
+#include <thread>
 
 // basic utilities
 #include "src/Utils.h"
@@ -33,7 +34,37 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
 }
 
+void render(const int image_width, const int image_height, const int samples_per_pixel, const int max_depth,
+            std::vector<std::vector<Pixel>> &image, HittableList &world, SimpleCamera &cam, const int thread_id,
+            const int max_threads) {
+    for (int j = image_height - 1; j >= 0; --j) {
+        if (j % max_threads != thread_id) continue;
+        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+        for (int i = 0; i < image_width; ++i) {
+            Color pixel_color(0, 0, 0);
+            for (int s = 0; s < samples_per_pixel; ++s) {
+                auto u = (i + random_double()) / (image_width - 1);
+                auto v = (j + random_double()) / (image_height - 1);
+                Ray r = cam.get_ray(u, v);
+                pixel_color += ray_color(r, world, max_depth);
+            }
+            image[j][i].set(pixel_color, samples_per_pixel);
+        }
+    }
+}
+
 int main() {
+
+    // threading
+#if defined(WINDOWS)
+    const int thread_count = 16;
+    std::clog << "Platform: Windows" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#else
+    const int thread_count = 64;
+    std::clog << "Platform: Linux" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#endif
 
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
@@ -57,18 +88,15 @@ int main() {
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += ray_color(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
+    std::vector<std::thread> worker_list;
+    for (int thread_id = 0; thread_id < thread_count; ++thread_id) {
+        std::thread worker(render, image_width, image_height, samples_per_pixel,
+                           max_depth, std::ref(image), std::ref(world), std::ref(cam),
+                           thread_id, thread_count);
+        worker_list.push_back(std::move(worker));
+    }
+    for (auto &worker: worker_list) {
+        worker.join();
     }
 
     // output
