@@ -18,7 +18,8 @@ Color ray_color(const Ray &r, const Accelerator &world) {
     Hit hit;
     // Note that we only shade front faces
     if (world.intersect(r, 0, inf, hit) && hit.front_face) {
-        return 0.5 * (hit.normal + Color(1, 1, 1));
+        Point target = hit.hit_point + hit.normal + random_in_unit_sphere();
+        return 0.5 * ray_color(Ray(hit.hit_point, target - hit.hit_point), world);
     }
     Vector3d unit_direction = normalize(r.direction());
     auto t = 0.5 * (unit_direction.y() + 1.0);
