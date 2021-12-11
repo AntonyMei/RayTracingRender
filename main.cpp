@@ -21,8 +21,8 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
     if (remaining_bounce <= 0)
         return {0, 0, 0};
 
-    // Note that we only shade front faces
-    if (world.intersect(r, 0, inf, hit) && hit.front_face) {
+    // check intersection
+    if (world.intersect(r, 0, inf, hit)) {
         Point target = hit.hit_point + hit.normal + random_in_unit_sphere();
         return 0.5 * ray_color(Ray(hit.hit_point, target - hit.hit_point), world,
                                remaining_bounce - 1);
