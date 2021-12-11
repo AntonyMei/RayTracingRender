@@ -14,13 +14,20 @@
 #include "src/Hittable.h"
 #include "src/Accelerator.h"
 
-Color ray_color(const Ray &r, const Accelerator &world) {
+Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
     Hit hit;
+
+    // If we've exceeded the ray bounce limit, no more light is gathered.
+    if (remaining_bounce <= 0)
+        return {0, 0, 0};
+
     // Note that we only shade front faces
     if (world.intersect(r, 0, inf, hit) && hit.front_face) {
         Point target = hit.hit_point + hit.normal + random_in_unit_sphere();
-        return 0.5 * ray_color(Ray(hit.hit_point, target - hit.hit_point), world);
+        return 0.5 * ray_color(Ray(hit.hit_point, target - hit.hit_point), world,
+                               remaining_bounce - 1);
     }
+
     Vector3d unit_direction = normalize(r.direction());
     auto t = 0.5 * (unit_direction.y() + 1.0);
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
@@ -32,7 +39,8 @@ int main() {
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 10;
+    const int samples_per_pixel = 100;
+    const int max_depth = 50;
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
         auto row = std::vector<Pixel>(image_width);
@@ -58,7 +66,7 @@ int main() {
                 auto u = (i + random_double()) / (image_width - 1);
                 auto v = (j + random_double()) / (image_height - 1);
                 Ray r = cam.get_ray(u, v);
-                pixel_color += ray_color(r, world);
+                pixel_color += ray_color(r, world, max_depth);
             }
             Pixel pixel;
             pixel.set(pixel_color, samples_per_pixel);
