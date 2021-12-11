@@ -65,9 +65,12 @@ public:
 
     // utils
     inline static Vector3d random() {
-        return Vector3d(random_double(), random_double(), random_double());
+        return {random_double(), random_double(), random_double()};
     }
 
+    inline static Vector3d random(double min, double max) {
+        return {random_double(min, max), random_double(min, max), random_double(min, max)};
+    }
 
 private:
 
@@ -132,6 +135,15 @@ inline Vector3d cross(const Vector3d &u, const Vector3d &v) {
 
 inline Vector3d normalize(Vector3d v) {
     return v / v.length();
+}
+
+Vector3d random_in_unit_sphere() {
+    // uses reject sampling to generate a random point
+    while (true) {
+        auto p = Vector3d::random(-1,1);
+        if (p.squared_length() >= 1) continue;
+        return p;
+    }
 }
 
 #endif //PROJECT_VECTOR3D_H
