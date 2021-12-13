@@ -43,12 +43,15 @@ Color cast_ray(const Ray &r, const Accelerator &world, int remaining_bounce) {
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
 }
 
+int finished_lines = 0;
+
 void render_worker(const int image_width, const int image_height, const int samples_per_pixel, const int max_depth,
                    std::vector<std::vector<Pixel>> &image, const HittableList &world, const SimpleCamera &cam,
                    const int thread_id, const int max_threads) {
     for (int j = image_height - 1; j >= 0; --j) {
         if (j % max_threads != thread_id) continue;
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+        if (finished_lines % 10 == 0)
+            std::cerr << thread_id << " " << finished_lines << std::endl;
         for (int i = 0; i < image_width; ++i) {
             Color pixel_color(0, 0, 0);
             for (int s = 0; s < samples_per_pixel; ++s) {
@@ -59,6 +62,7 @@ void render_worker(const int image_width, const int image_height, const int samp
             }
             image[j][i].set(pixel_color, samples_per_pixel);
         }
+        ++finished_lines;
     }
 }
 
@@ -261,7 +265,7 @@ void render_hollow_glass_ball_off_focus() {
     std::clog << "Platform: Windows" << std::endl;
     std::clog << "Thread count: " << thread_count << std::endl;
 #else
-    const int thread_count = 96;
+    const int thread_count = 4;
     std::clog << "Platform: Linux" << std::endl;
     std::clog << "Thread count: " << thread_count << std::endl;
 #endif
@@ -307,7 +311,7 @@ void render_hollow_glass_ball_off_focus() {
     std::vector<std::thread> worker_list;
     for (int thread_id = 0; thread_id < thread_count; ++thread_id) {
         std::thread worker(render_worker, image_width, image_height, samples_per_pixel,
-                           max_depth, std::ref(image), std::ref(world), std::ref(cam),
+                           max_depth, std::ref(image), std::cref(world), std::cref(cam),
                            thread_id, thread_count);
         worker_list.push_back(std::move(worker));
     }
@@ -389,5 +393,6 @@ void render_many_balls() {
 int main() {
     // multi-tread ray tracer 1.0
     // Note that console output will be scrambled, which is normal.
-    render_many_balls();
+    std::cout << "render_hollow_glass_ball_off_focus" << std::endl;
+    render_hollow_glass_ball_off_focus();
 }
