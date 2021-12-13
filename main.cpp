@@ -47,8 +47,9 @@ void render_worker(const int image_width, const int image_height, const int samp
                    std::vector<std::vector<Pixel>> &image, const HittableList &world, const SimpleCamera &cam,
                    const int thread_id, const int max_threads) {
     for (int j = image_height - 1; j >= 0; --j) {
+        auto start = time(nullptr);
         if (j % max_threads != thread_id) continue;
-        std::cerr << "Scanlines remaining: " << j << ' ' << std::flush << std::endl;
+//        std::cerr << "Scanlines remaining: " << j << '\n';
         for (int i = 0; i < image_width; ++i) {
             Color pixel_color(0, 0, 0);
             for (int s = 0; s < samples_per_pixel; ++s) {
@@ -59,6 +60,8 @@ void render_worker(const int image_width, const int image_height, const int samp
             }
             image[j][i].set(pixel_color, samples_per_pixel);
         }
+        auto end = time(nullptr);
+        std::cerr << "loop time: " << end - start << '\n';
     }
 }
 
@@ -261,7 +264,7 @@ void render_hollow_glass_ball_off_focus() {
     std::clog << "Platform: Windows" << std::endl;
     std::clog << "Thread count: " << thread_count << std::endl;
 #else
-    const int thread_count = 96;
+    const int thread_count = 4;
     std::clog << "Platform: Linux" << std::endl;
     std::clog << "Thread count: " << thread_count << std::endl;
 #endif
@@ -306,7 +309,7 @@ void render_hollow_glass_ball_off_focus() {
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     std::vector<std::thread> worker_list;
     for (int thread_id = 0; thread_id < thread_count; ++thread_id) {
-        std::thread worker(render_worker, image_width, image_height, samples_per_pixel,
+        std::thread worker(std::move(render_worker), image_width, image_height, samples_per_pixel,
                            max_depth, std::ref(image), std::cref(world), std::cref(cam),
                            thread_id, thread_count);
         worker_list.push_back(std::move(worker));
