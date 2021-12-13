@@ -331,5 +331,6 @@ void render_many_balls() {
 }
 
 int main() {
+    // multi-tread ray tracer 1.0
     render_many_balls();
 }
