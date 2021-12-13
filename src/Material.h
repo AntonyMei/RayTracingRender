@@ -57,4 +57,25 @@ private:
     double fuzz;
 };
 
+class Dielectric : public Material {
+public:
+    explicit Dielectric(double index_of_refraction) : ir(index_of_refraction) {}
+
+    bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
+                 std::vector<Ray> &scattered_rays) const override {
+        attenuation = Color(1.0, 1.0, 1.0);
+        double refraction_ratio = hit.front_face ? (1.0 / ir) : ir;
+
+        Vector3d unit_direction = normalize(ray_in.direction());
+        Vector3d refracted = refract(unit_direction, hit.normal, refraction_ratio);
+
+        scattered_rays.emplace_back(hit.hit_point, refracted);
+        return true;
+    }
+
+private:
+    // eta of this material (index of refraction)
+    double ir;
+};
+
 #endif //PROJECT_MATERIAL_H
