@@ -169,7 +169,7 @@ Vector3d reflect(const Vector3d &v, const Vector3d &n) {
 }
 
 Vector3d refract(const Vector3d &uv, const Vector3d &n, double refract_coefficient) {
-    // eta: typically air = 1.0, glass = 1.3–1.7, diamond = 2.4
+    // eta: typically air = 1.0, glass = 1.3 - 1.7, diamond = 2.4
     // refract_coefficient is equal to eta_in / eta_out
     auto cos_theta = fmin(dot(-uv, n), 1.0);
     Vector3d r_out_perp = refract_coefficient * (uv + cos_theta * n);
