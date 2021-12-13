@@ -63,13 +63,23 @@ public:
 
     bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
                  std::vector<Ray> &scattered_rays) const override {
+        // calculate parameters
         attenuation = Color(1.0, 1.0, 1.0);
         double refraction_ratio = hit.front_face ? (1.0 / ir) : ir;
 
         Vector3d unit_direction = normalize(ray_in.direction());
-        Vector3d refracted = refract(unit_direction, hit.normal, refraction_ratio);
+        double cos_theta = fmin(dot(-unit_direction, hit.normal), 1.0);
+        double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
 
-        scattered_rays.emplace_back(hit.hit_point, refracted);
+        // generate new ray's direction
+        bool cannot_refract = refraction_ratio * sin_theta > 1.0;
+        Vector3d direction;
+        if (cannot_refract)
+            direction = reflect(unit_direction, hit.normal);
+        else
+            direction = refract(unit_direction, hit.normal, refraction_ratio);
+
+        scattered_rays.emplace_back(hit.hit_point, direction);
         return true;
     }
 
