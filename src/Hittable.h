@@ -78,6 +78,7 @@ public:
                 hit.hit_point = ray.at(root);
                 Vector3d normal = (hit.hit_point - c) / r;
                 hit.set_face_normal(ray, normal);
+                hit.mat_ptr = mat_ptr;
                 return true;
             } else { return false; }
         }

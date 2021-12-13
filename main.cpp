@@ -28,7 +28,7 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
         Color attenuation;
         if (hit.mat_ptr->scatter(r, hit, attenuation, scattered_list)) {
             Color scatter_color;
-            for (auto scattered: scattered_list) {
+            for (const auto& scattered: scattered_list) {
                 scatter_color += ray_color(scattered, world, remaining_bounce - 1);
             }
             scatter_color /= static_cast<double>(scattered_list.size());
@@ -48,7 +48,7 @@ int main() {
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 1024;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 100;
+    const int samples_per_pixel = 1;
     const int max_depth = 50;
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
