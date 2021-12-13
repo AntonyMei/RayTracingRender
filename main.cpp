@@ -133,7 +133,7 @@ void render_hollow_glass_ball_small_fov() {
     world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
 
     // Camera
-    Point camera_position(3, 3, 2);
+    Point camera_position(-2, 2, 1);
     Point view_point(0, 0, -1);
     Vector3d camera_up(0, 1, 0);
     auto dist_to_focus = 1;
@@ -232,5 +232,5 @@ void render_hollow_glass_ball_off_focus() {
 };
 
 int main() {
-    render_hollow_glass_ball_off_focus();
+    render_hollow_glass_ball_small_fov();
 }
