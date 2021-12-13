@@ -19,7 +19,8 @@ protected:
 
 class SimpleCamera : public Camera {
 public:
-    SimpleCamera(double vertical_fov, double aspect_ratio) {
+    SimpleCamera(Point cam_pos, Point cam_target, Vector3d cam_up,
+                 double vertical_fov, double aspect_ratio) {
         // set intrinsic
         auto theta = deg2rad(vertical_fov);
         auto h = tan(theta / 2);
@@ -27,11 +28,16 @@ public:
         auto viewport_width = aspect_ratio * viewport_height;
         auto focal_length = 1.0;
 
-        // set extrinsic
-        origin = Point(0, 0, 0);
-        horizontal = Vector3d(viewport_width, 0.0, 0.0);
-        vertical = Vector3d(0.0, viewport_height, 0.0);
-        lower_left_corner = origin - horizontal / 2 - vertical / 2 - Vector3d(0, 0, focal_length);
+        // calculate direction for local coordinates
+        auto w = normalize(cam_pos - cam_target);
+        auto u = normalize(cross(cam_up, w));
+        auto v = cross(w, u);
+
+        // camera extrinsic
+        origin = cam_pos;
+        horizontal = viewport_width * u;
+        vertical = viewport_height * v;
+        lower_left_corner = origin - horizontal / 2 - vertical / 2 - w;
     }
 
     Ray get_ray(double u, double v) const override {

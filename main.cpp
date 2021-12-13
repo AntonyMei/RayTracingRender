@@ -28,7 +28,7 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
         Color attenuation;
         if (hit.mat_ptr->scatter(r, hit, attenuation, scattered_list)) {
             Color scatter_color;
-            for (const auto& scattered: scattered_list) {
+            for (const auto &scattered: scattered_list) {
                 scatter_color += ray_color(scattered, world, remaining_bounce - 1);
             }
             scatter_color /= static_cast<double>(scattered_list.size());
@@ -57,17 +57,22 @@ int main() {
     }
 
     // World
-    auto R = cos(pi/4);
     HittableList world;
 
-    auto material_left  = make_shared<Lambertian>(Color(0,0,1));
-    auto material_right = make_shared<Lambertian>(Color(1,0,0));
+    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
+    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
+    auto material_left = make_shared<Dielectric>(1.5);
+    auto material_right = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
 
-    world.add(make_shared<Sphere>(Point(-R, 0, -1), R, material_left));
-    world.add(make_shared<Sphere>(Point( R, 0, -1), R, material_right));
+    world.add(make_shared<Sphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
+    world.add(make_shared<Sphere>(Point(0.0, 0.0, -1.0), 0.5, material_center));
+    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
+    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), -0.45, material_left));
+    world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
 
     // Camera
-    SimpleCamera cam(90.0, aspect_ratio);
+    SimpleCamera cam(Point(-2, 2, 1), Point(0, 0, -1),
+                     Vector3d(0, 1, 0), 90, aspect_ratio);
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
