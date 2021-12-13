@@ -24,10 +24,17 @@ Color ray_color(const Ray &r, const Accelerator &world, int remaining_bounce) {
 
     // check intersection
     if (world.intersect(r, TMIN, inf, hit)) {
-        // use 3rd diffuse model
-        Point target = hit.hit_point + hit.normal + random_in_hemisphere(hit.normal);
-        return 0.5 * ray_color(Ray(hit.hit_point, target - hit.hit_point), world,
-                               remaining_bounce - 1);
+        std::vector<Ray> scattered_list;
+        Color attenuation;
+        if (hit.mat_ptr->scatter(r, hit, attenuation, scattered_list)) {
+            Color scatter_color;
+            for (auto scattered: scattered_list) {
+                scatter_color += ray_color(scattered, world, remaining_bounce - 1);
+            }
+            scatter_color /= static_cast<double>(scattered_list.size());
+            return attenuation * scatter_color;
+        }
+        return {0, 0, 0};
     }
 
     Vector3d unit_direction = normalize(r.direction());
@@ -39,10 +46,10 @@ int main() {
     // removed threading
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 800;
+    const int image_width = 1024;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 30;
-    const int max_depth = 10;
+    const int samples_per_pixel = 100;
+    const int max_depth = 50;
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
         auto row = std::vector<Pixel>(image_width);
@@ -51,9 +58,15 @@ int main() {
 
     // World
     HittableList world;
+    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
     auto material_center = make_shared<Lambertian>(Color(0.7, 0.3, 0.3));
-    world.add(make_shared<Sphere>(Point(0, 0, -1), 0.5, material_center));
-    world.add(make_shared<Sphere>(Point(0, -100.5, -1), 100, material_center));
+    auto material_left   = make_shared<Metal>(Color(0.8, 0.8, 0.8));
+    auto material_right  = make_shared<Metal>(Color(0.8, 0.6, 0.2));
+
+    world.add(make_shared<Sphere>(Point( 0.0, -100.5, -1.0), 100.0, material_ground));
+    world.add(make_shared<Sphere>(Point( 0.0,    0.0, -1.0),   0.5, material_center));
+    world.add(make_shared<Sphere>(Point(-1.0,    0.0, -1.0),   0.5, material_left));
+    world.add(make_shared<Sphere>(Point( 1.0,    0.0, -1.0),   0.5, material_right));
 
     // Camera
     SimpleCamera cam;

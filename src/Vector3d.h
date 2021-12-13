@@ -146,7 +146,7 @@ inline Vector3d normalize(Vector3d v) {
 Vector3d random_in_unit_sphere() {
     // uses reject sampling to generate a random point
     while (true) {
-        auto p = Vector3d::random(-1,1);
+        auto p = Vector3d::random(-1, 1);
         if (p.squared_length() >= 1) continue;
         return p;
     }
@@ -156,12 +156,16 @@ Vector3d random_unit_vector() {
     return normalize(random_in_unit_sphere());
 }
 
-Vector3d random_in_hemisphere(const Vector3d& normal) {
+Vector3d random_in_hemisphere(const Vector3d &normal) {
     Vector3d in_unit_sphere = random_in_unit_sphere();
     if (dot(in_unit_sphere, normal) > 0.0)
         return in_unit_sphere;
     else
         return -in_unit_sphere;
+}
+
+Vector3d reflect(const Vector3d &v, const Vector3d &n) {
+    return v - 2 * dot(v, n) * n;
 }
 
 #endif //PROJECT_VECTOR3D_H

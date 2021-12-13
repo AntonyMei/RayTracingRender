@@ -34,4 +34,22 @@ private:
     Color albedo;
 };
 
+class Metal : public Material {
+public:
+    explicit Metal(const Color &a) : albedo(a) {}
+
+    Color get_albedo() { return albedo; }
+
+    bool scatter(const Ray &r_in, const Hit &hit, Color &attenuation,
+                 std::vector<Ray> &scattered_rays) const override {
+        Vector3d reflected_dir = reflect(normalize(r_in.direction()), hit.normal);
+        scattered_rays.emplace_back(hit.hit_point, reflected_dir);
+        attenuation = albedo;
+        return (dot(reflected_dir, hit.normal) > 0);
+    }
+
+private:
+    Color albedo;
+};
+
 #endif //PROJECT_MATERIAL_H
