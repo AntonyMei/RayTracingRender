@@ -43,15 +43,12 @@ Color cast_ray(const Ray &r, const Accelerator &world, int remaining_bounce) {
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
 }
 
-int finished_lines = 0;
-
 void render_worker(const int image_width, const int image_height, const int samples_per_pixel, const int max_depth,
                    std::vector<std::vector<Pixel>> &image, const HittableList &world, const SimpleCamera &cam,
                    const int thread_id, const int max_threads) {
     for (int j = image_height - 1; j >= 0; --j) {
         if (j % max_threads != thread_id) continue;
-        if (finished_lines % 10 == 0)
-            std::cerr << thread_id << " " << finished_lines << std::endl;
+        std::cerr << "Scanlines remaining: " << j << ' ' << std::flush << std::endl;
         for (int i = 0; i < image_width; ++i) {
             Color pixel_color(0, 0, 0);
             for (int s = 0; s < samples_per_pixel; ++s) {
@@ -62,7 +59,6 @@ void render_worker(const int image_width, const int image_height, const int samp
             }
             image[j][i].set(pixel_color, samples_per_pixel);
         }
-        ++finished_lines;
     }
 }
 
@@ -265,7 +261,7 @@ void render_hollow_glass_ball_off_focus() {
     std::clog << "Platform: Windows" << std::endl;
     std::clog << "Thread count: " << thread_count << std::endl;
 #else
-    const int thread_count = 4;
+    const int thread_count = 96;
     std::clog << "Platform: Linux" << std::endl;
     std::clog << "Thread count: " << thread_count << std::endl;
 #endif
