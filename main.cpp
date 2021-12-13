@@ -2,6 +2,7 @@
 // Created by meiyixuan on 2021-12-09.
 //
 #include <iostream>
+#include <thread>
 
 // basic utilities
 #include "src/Utils.h"
@@ -42,6 +43,25 @@ Color cast_ray(const Ray &r, const Accelerator &world, int remaining_bounce) {
     return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
 }
 
+void render_worker(const int image_width, const int image_height, const int samples_per_pixel, const int max_depth,
+                   std::vector<std::vector<Pixel>> &image, const HittableList &world, const SimpleCamera &cam,
+                   const int thread_id, const int max_threads) {
+    for (int j = image_height - 1; j >= 0; --j) {
+        if (j % max_threads != thread_id) continue;
+        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+        for (int i = 0; i < image_width; ++i) {
+            Color pixel_color(0, 0, 0);
+            for (int s = 0; s < samples_per_pixel; ++s) {
+                auto u = (i + random_double()) / (image_width - 1);
+                auto v = (j + random_double()) / (image_height - 1);
+                Ray r = cam.get_ray(u, v);
+                pixel_color += cast_ray(r, world, max_depth);
+            }
+            image[j][i].set(pixel_color, samples_per_pixel);
+        }
+    }
+}
+
 HittableList random_scene() {
     HittableList world;
 
@@ -57,7 +77,7 @@ HittableList random_scene() {
             if ((center - Point(4, 0.2, 0)).length() > 0.9) {
                 shared_ptr<Material> sphere_material;
 
-                if (choose_mat < 0.6) {
+                if (choose_mat < 0.75) {
                     // diffuse
                     auto albedo = Color::random() * Color::random();
                     sphere_material = make_shared<Lambertian>(albedo);
@@ -90,6 +110,18 @@ HittableList random_scene() {
 }
 
 void render_hollow_glass_ball() {
+
+    // threading
+#if defined(WINDOWS)
+    const int thread_count = 16;
+    std::clog << "Platform: Windows" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#else
+    const int thread_count = 96;
+    std::clog << "Platform: Linux" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#endif
+
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 3840; // 3840, 800
@@ -128,18 +160,15 @@ void render_hollow_glass_ball() {
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
+    std::vector<std::thread> worker_list;
+    for (int thread_id = 0; thread_id < thread_count; ++thread_id) {
+        std::thread worker(render_worker, image_width, image_height, samples_per_pixel,
+                           max_depth, std::ref(image), std::ref(world), std::ref(cam),
+                           thread_id, thread_count);
+        worker_list.push_back(std::move(worker));
+    }
+    for (auto &worker: worker_list) {
+        worker.join();
     }
 
     // output
@@ -153,6 +182,18 @@ void render_hollow_glass_ball() {
 }
 
 void render_hollow_glass_ball_small_fov() {
+
+    // threading
+#if defined(WINDOWS)
+    const int thread_count = 16;
+    std::clog << "Platform: Windows" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#else
+    const int thread_count = 96;
+    std::clog << "Platform: Linux" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#endif
+
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 3840; // 3840, 800
@@ -191,18 +232,15 @@ void render_hollow_glass_ball_small_fov() {
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
+    std::vector<std::thread> worker_list;
+    for (int thread_id = 0; thread_id < thread_count; ++thread_id) {
+        std::thread worker(render_worker, image_width, image_height, samples_per_pixel,
+                           max_depth, std::ref(image), std::ref(world), std::ref(cam),
+                           thread_id, thread_count);
+        worker_list.push_back(std::move(worker));
+    }
+    for (auto &worker: worker_list) {
+        worker.join();
     }
 
     // output
@@ -216,6 +254,18 @@ void render_hollow_glass_ball_small_fov() {
 }
 
 void render_hollow_glass_ball_off_focus() {
+
+    // threading
+#if defined(WINDOWS)
+    const int thread_count = 16;
+    std::clog << "Platform: Windows" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#else
+    const int thread_count = 96;
+    std::clog << "Platform: Linux" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#endif
+
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 3840; // 3840, 800
@@ -254,18 +304,15 @@ void render_hollow_glass_ball_off_focus() {
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
+    std::vector<std::thread> worker_list;
+    for (int thread_id = 0; thread_id < thread_count; ++thread_id) {
+        std::thread worker(render_worker, image_width, image_height, samples_per_pixel,
+                           max_depth, std::ref(image), std::ref(world), std::ref(cam),
+                           thread_id, thread_count);
+        worker_list.push_back(std::move(worker));
+    }
+    for (auto &worker: worker_list) {
+        worker.join();
     }
 
     // output
@@ -279,6 +326,18 @@ void render_hollow_glass_ball_off_focus() {
 };
 
 void render_many_balls() {
+
+    // threading
+#if defined(WINDOWS)
+    const int thread_count = 16;
+    std::clog << "Platform: Windows" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#else
+    const int thread_count = 96;
+    std::clog << "Platform: Linux" << std::endl;
+    std::clog << "Thread count: " << thread_count << std::endl;
+#endif
+
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 3840; // 3840, 800
@@ -306,18 +365,15 @@ void render_many_balls() {
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
+    std::vector<std::thread> worker_list;
+    for (int thread_id = 0; thread_id < thread_count; ++thread_id) {
+        std::thread worker(render_worker, image_width, image_height, samples_per_pixel,
+                           max_depth, std::ref(image), std::ref(world), std::ref(cam),
+                           thread_id, thread_count);
+        worker_list.push_back(std::move(worker));
+    }
+    for (auto &worker: worker_list) {
+        worker.join();
     }
 
     // output
@@ -332,5 +388,6 @@ void render_many_balls() {
 
 int main() {
     // multi-tread ray tracer 1.0
+    // Note that console output will be scrambled, which is normal.
     render_many_balls();
 }
