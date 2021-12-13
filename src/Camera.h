@@ -23,6 +23,7 @@ public:
                  double vertical_fov, double aspect_ratio, double aperture,
                  double focus_dist) {
         // if no blur: aperture = 0.0, focus_dist = 1.0
+        // a nice one: aperture = 0.1, focus_dist = 10
         // if larger blur: aperture = 2.0, focus_dist = len(cam_pos - cam_target)
 
         // set intrinsic
