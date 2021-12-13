@@ -72,7 +72,7 @@ int main() {
 
     // Camera
     SimpleCamera cam(Point(-2, 2, 1), Point(0, 0, -1),
-                     Vector3d(0, 1, 0), 90, aspect_ratio);
+                     Vector3d(0, 1, 0), 20, aspect_ratio);
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
