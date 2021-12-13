@@ -201,7 +201,7 @@ void render_hollow_glass_ball_off_focus() {
         Vector3d camera_up(0, 1, 0);
         auto dist_to_focus = (camera_position - view_point).length();
         auto vertical_fov = 20;
-        auto aperture = 2.0;
+        auto aperture = 1.0;
         SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
         aperture, dist_to_focus);
 
