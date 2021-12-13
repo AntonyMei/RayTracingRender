@@ -46,10 +46,10 @@ int main() {
     // removed threading
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 1024;
+    const int image_width = 800;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 100;
-    const int max_depth = 50;
+    const int samples_per_pixel = 10;
+    const int max_depth = 5;
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
         auto row = std::vector<Pixel>(image_width);
@@ -57,20 +57,17 @@ int main() {
     }
 
     // World
+    auto R = cos(pi/4);
     HittableList world;
-    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
-    auto material_left   = make_shared<Dielectric>(1.5);
-    auto material_right  = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
 
-    world.add(make_shared<Sphere>(Point( 0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<Sphere>(Point( 0.0,    0.0, -1.0),   0.5, material_center));
-    world.add(make_shared<Sphere>(Point(-1.0,    0.0, -1.0),   0.5, material_left));
-    world.add(make_shared<Sphere>(Point(-1.0,    0.0, -1.0),  -0.4, material_left));
-    world.add(make_shared<Sphere>(Point( 1.0,    0.0, -1.0),   0.5, material_right));
+    auto material_left  = make_shared<Lambertian>(Color(0,0,1));
+    auto material_right = make_shared<Lambertian>(Color(1,0,0));
+
+    world.add(make_shared<Sphere>(Point(-R, 0, -1), R, material_left));
+    world.add(make_shared<Sphere>(Point( R, 0, -1), R, material_right));
 
     // Camera
-    SimpleCamera cam;
+    SimpleCamera cam(90.0, aspect_ratio);
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";

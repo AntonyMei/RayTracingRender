@@ -7,14 +7,14 @@
 
 class Camera {
 public:
-    Camera() : aspect_ratio(16.0 / 9.0), viewport_height(2.0), viewport_width(32.0 / 9.0),
+    Camera() : _aspect_ratio(16.0 / 9.0), viewport_height(2.0), viewport_width(32.0 / 9.0),
                focal_length(1.0) {}
 
     virtual Ray get_ray(double u, double v) const = 0;
 
 protected:
     // camera intrinsic
-    double aspect_ratio;
+    double _aspect_ratio;
     double viewport_height;
     double viewport_width;
     double focal_length;
@@ -28,10 +28,12 @@ protected:
 
 class SimpleCamera : public Camera {
 public:
-    SimpleCamera() {
+    SimpleCamera(double vertical_fov, double aspect_ratio) {
         // set intrinsic
-        aspect_ratio = 16.0 / 9.0;
-        viewport_height = 2.0;
+        auto theta = deg2rad(vertical_fov);
+        auto h = tan(theta / 2);
+        _aspect_ratio = aspect_ratio;
+        viewport_height = 2.0 * h;
         viewport_width = aspect_ratio * viewport_height;
         focal_length = 1.0;
 
