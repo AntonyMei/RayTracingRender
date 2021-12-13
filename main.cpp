@@ -71,8 +71,14 @@ int main() {
     world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
 
     // Camera
-    SimpleCamera cam(Point(-2, 2, 1), Point(0, 0, -1),
-                     Vector3d(0, 1, 0), 20, aspect_ratio);
+    Point camera_position(3, 3, 2);
+    Point view_point(0, 0, -1);
+    Vector3d camera_up(0, 1, 0);
+    auto dist_to_focus = (camera_position - view_point).length();
+    auto vertical_fov = 20;
+    auto aperture = 2.0;
+    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+                     aperture, dist_to_focus);
 
     // Render
     std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";

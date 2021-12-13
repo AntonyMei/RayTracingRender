@@ -143,6 +143,14 @@ inline Vector3d normalize(Vector3d v) {
     return v / v.length();
 }
 
+Vector3d random_in_unit_disk() {
+    while (true) {
+        auto p = Vector3d(random_double(-1,1), random_double(-1,1), 0);
+        if (p.squared_length() >= 1) continue;
+        return p;
+    }
+}
+
 Vector3d random_in_unit_sphere() {
     // uses reject sampling to generate a random point
     while (true) {
