@@ -69,12 +69,12 @@ public:
 
         Vector3d unit_direction = normalize(ray_in.direction());
         double cos_theta = fmin(dot(-unit_direction, hit.normal), 1.0);
-        double sin_theta = sqrt(1.0 - cos_theta*cos_theta);
+        double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
 
         // generate new ray's direction
         bool cannot_refract = refraction_ratio * sin_theta > 1.0;
         Vector3d direction;
-        if (cannot_refract)
+        if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double())
             direction = reflect(unit_direction, hit.normal);
         else
             direction = refract(unit_direction, hit.normal, refraction_ratio);
@@ -86,6 +86,13 @@ public:
 private:
     // eta of this material (index of refraction)
     double ir;
+
+    static double reflectance(double cosine, double ref_idx) {
+        // Use Schlick's approximation for reflectance.
+        auto r0 = (1 - ref_idx) / (1 + ref_idx);
+        r0 = r0 * r0;
+        return r0 + (1 - r0) * pow((1 - cosine), 5);
+    }
 };
 
 #endif //PROJECT_MATERIAL_H
