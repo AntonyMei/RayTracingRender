@@ -7,18 +7,9 @@
 
 class Camera {
 public:
-    Camera() : _aspect_ratio(16.0 / 9.0), viewport_height(2.0), viewport_width(32.0 / 9.0),
-               focal_length(1.0) {}
-
     virtual Ray get_ray(double u, double v) const = 0;
 
 protected:
-    // camera intrinsic
-    double _aspect_ratio;
-    double viewport_height;
-    double viewport_width;
-    double focal_length;
-
     // camera extrinsic
     Point origin;
     Point lower_left_corner;
@@ -32,10 +23,9 @@ public:
         // set intrinsic
         auto theta = deg2rad(vertical_fov);
         auto h = tan(theta / 2);
-        _aspect_ratio = aspect_ratio;
-        viewport_height = 2.0 * h;
-        viewport_width = aspect_ratio * viewport_height;
-        focal_length = 1.0;
+        auto viewport_height = 2.0 * h;
+        auto viewport_width = aspect_ratio * viewport_height;
+        auto focal_length = 1.0;
 
         // set extrinsic
         origin = Point(0, 0, 0);
