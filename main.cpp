@@ -66,6 +66,7 @@ int main() {
     world.add(make_shared<Sphere>(Point( 0.0, -100.5, -1.0), 100.0, material_ground));
     world.add(make_shared<Sphere>(Point( 0.0,    0.0, -1.0),   0.5, material_center));
     world.add(make_shared<Sphere>(Point(-1.0,    0.0, -1.0),   0.5, material_left));
+    world.add(make_shared<Sphere>(Point(-1.0,    0.0, -1.0),  -0.4, material_left));
     world.add(make_shared<Sphere>(Point( 1.0,    0.0, -1.0),   0.5, material_right));
 
     // Camera
