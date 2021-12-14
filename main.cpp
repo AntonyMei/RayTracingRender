@@ -66,9 +66,9 @@ HittableList random_scene() {
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
-            auto choose_mat = rand();
-            Point center(a + 0.9 * rand(), 0.15 + 0.1 * rand(),
-                         b + 0.9 * rand());
+            auto choose_mat = random_double_fixed();
+            Point center(a + 0.9 * random_double_fixed(), 0.15 + 0.1 * random_double_fixed(),
+                         b + 0.9 * random_double_fixed());
 
             if ((center - Point(4, 0.2, 0)).length() > 0.9) {
                 shared_ptr<Material> sphere_material;
