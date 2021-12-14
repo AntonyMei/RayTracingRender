@@ -379,7 +379,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
 
     // Render
     for (int j = start_row; j > end_row; --j) {
-        std::cerr << "Scanlines remaining: " << j - end_row << ' ' << std::flush;
+        std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
         auto start = time(nullptr);
         for (int i = 0; i < image_width; ++i) {
             Color pixel_color(0, 0, 0);
@@ -392,7 +392,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
             image[j][i].set(pixel_color, samples_per_pixel);
         }
         auto end = time(nullptr);
-        std::cerr << "loop time " << end - start << "s" << std::flush;
+        std::cerr << "loop time " << end - start << "s\n" << std::flush;
     }
 
     // output
