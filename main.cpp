@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <ctime>
 
@@ -351,8 +352,8 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 400; // 3840, 800
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 40; // 1000, 100
-    const int max_depth = 10; // 100, 50
+    const int samples_per_pixel = 20; // 1000, 100
+    const int max_depth = 5; // 100, 50
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
         auto row = std::vector<Pixel>(image_width);

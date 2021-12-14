@@ -3,6 +3,7 @@
 //
 #include <fstream>
 #include <iostream>
+#include <cstring>
 #include <string>
 #include "src/Utils.h"
 
