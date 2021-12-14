@@ -19,7 +19,7 @@ public:
 
     int get_sample_count() const { return sample_count; }
 
-    void write() {
+    void write(std::ofstream &out) {
         // a pixel can only be written once for correctness
         if (!write_flag) {
             write_flag = true;
@@ -37,9 +37,9 @@ public:
         b = sqrt(scale * b);
 
         // scale to [0, 255] and output
-        std::cout << static_cast<int>(256 * clamp(r, 0.0, 0.999)) << ' '
-                  << static_cast<int>(256 * clamp(g, 0.0, 0.999)) << ' '
-                  << static_cast<int>(256 * clamp(b, 0.0, 0.999)) << '\n';
+        out << static_cast<int>(256 * clamp(r, 0.0, 0.999)) << ' '
+            << static_cast<int>(256 * clamp(g, 0.0, 0.999)) << ' '
+            << static_cast<int>(256 * clamp(b, 0.0, 0.999)) << '\n';
     }
 
 private:

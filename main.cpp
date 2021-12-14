@@ -1,8 +1,23 @@
 //
 // Created by meiyixuan on 2021-12-09.
 //
+#include <fstream>
 #include <iostream>
 #include <cstdlib>
+#include <string>
+#include <ctime>
+
+// multiprocessing / multithreading
+#ifdef WINDOWS
+
+#include <omp.h>
+
+#else
+
+#include <unistd.h>
+#include <sys/wait.h>
+
+#endif
 
 // basic utilities
 #include "src/Utils.h"
@@ -90,248 +105,248 @@ HittableList random_scene() {
     return world;
 }
 
-void render_hollow_glass_ball() {
-    // Image
-    const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 3840; // 3840, 800
-    const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 1000; // 1000, 100
-    const int max_depth = 100; // 100, 50
-    auto image = std::vector<std::vector<Pixel>>();
-    for (int idx = 0; idx < image_height; ++idx) {
-        auto row = std::vector<Pixel>(image_width);
-        image.push_back(std::move(row));
-    }
+//void render_hollow_glass_ball() {
+//    // Image
+//    const auto aspect_ratio = 16.0 / 9.0;
+//    const int image_width = 3840; // 3840, 800
+//    const int image_height = static_cast<int>(image_width / aspect_ratio);
+//    const int samples_per_pixel = 1000; // 1000, 100
+//    const int max_depth = 100; // 100, 50
+//    auto image = std::vector<std::vector<Pixel>>();
+//    for (int idx = 0; idx < image_height; ++idx) {
+//        auto row = std::vector<Pixel>(image_width);
+//        image.push_back(std::move(row));
+//    }
+//
+//    // World
+//    HittableList world;
+//
+//    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
+//    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
+//    auto material_left = make_shared<Dielectric>(1.5);
+//    auto material_right = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
+//
+//    world.add(make_shared<Sphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
+//    world.add(make_shared<Sphere>(Point(0.0, 0.0, -1.0), 0.5, material_center));
+//    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
+//    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), -0.45, material_left));
+//    world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
+//
+//    // Camera
+//    Point camera_position(0, 0, 0);
+//    Point view_point(0, 0, -1);
+//    Vector3d camera_up(0, 1, 0);
+//    auto dist_to_focus = 1;
+//    auto vertical_fov = 90;
+//    auto aperture = 0;
+//    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+//                     aperture, dist_to_focus);
+//
+//    // Render
+//    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+//    for (int j = image_height - 1; j >= 0; --j) {
+//        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+//        for (int i = 0; i < image_width; ++i) {
+//            Color pixel_color(0, 0, 0);
+//            for (int s = 0; s < samples_per_pixel; ++s) {
+//                auto u = (i + random_double()) / (image_width - 1);
+//                auto v = (j + random_double()) / (image_height - 1);
+//                Ray r = cam.get_ray(u, v);
+//                pixel_color += cast_ray(r, world, max_depth);
+//            }
+//            image[j][i].set(pixel_color, samples_per_pixel);
+//        }
+//    }
+//
+//    // output
+//    for (int j = image_height - 1; j >= 0; --j) {
+//        for (int i = 0; i < image_width; ++i) {
+//            image[j][i].write();
+//        }
+//    }
+//
+//    std::cerr << "\nDone.\n";
+//}
+//
+//void render_hollow_glass_ball_small_fov() {
+//    // Image
+//    const auto aspect_ratio = 16.0 / 9.0;
+//    const int image_width = 3840; // 3840, 800
+//    const int image_height = static_cast<int>(image_width / aspect_ratio);
+//    const int samples_per_pixel = 1000; // 1000, 100
+//    const int max_depth = 100; // 100, 50
+//    auto image = std::vector<std::vector<Pixel>>();
+//    for (int idx = 0; idx < image_height; ++idx) {
+//        auto row = std::vector<Pixel>(image_width);
+//        image.push_back(std::move(row));
+//    }
+//
+//    // World
+//    HittableList world;
+//
+//    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
+//    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
+//    auto material_left = make_shared<Dielectric>(1.5);
+//    auto material_right = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
+//
+//    world.add(make_shared<Sphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
+//    world.add(make_shared<Sphere>(Point(0.0, 0.0, -1.0), 0.5, material_center));
+//    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
+//    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), -0.45, material_left));
+//    world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
+//
+//    // Camera
+//    Point camera_position(-2, 2, 1);
+//    Point view_point(0, 0, -1);
+//    Vector3d camera_up(0, 1, 0);
+//    auto dist_to_focus = 1;
+//    auto vertical_fov = 20;
+//    auto aperture = 0;
+//    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+//                     aperture, dist_to_focus);
+//
+//    // Render
+//    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+//    for (int j = image_height - 1; j >= 0; --j) {
+//        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+//        for (int i = 0; i < image_width; ++i) {
+//            Color pixel_color(0, 0, 0);
+//            for (int s = 0; s < samples_per_pixel; ++s) {
+//                auto u = (i + random_double()) / (image_width - 1);
+//                auto v = (j + random_double()) / (image_height - 1);
+//                Ray r = cam.get_ray(u, v);
+//                pixel_color += cast_ray(r, world, max_depth);
+//            }
+//            image[j][i].set(pixel_color, samples_per_pixel);
+//        }
+//    }
+//
+//    // output
+//    for (int j = image_height - 1; j >= 0; --j) {
+//        for (int i = 0; i < image_width; ++i) {
+//            image[j][i].write();
+//        }
+//    }
+//
+//    std::cerr << "\nDone.\n";
+//}
+//
+//void render_hollow_glass_ball_off_focus() {
+//    // Image
+//    const auto aspect_ratio = 16.0 / 9.0;
+//    const int image_width = 3840; // 3840, 800
+//    const int image_height = static_cast<int>(image_width / aspect_ratio);
+//    const int samples_per_pixel = 1000; // 1000, 100
+//    const int max_depth = 100; // 100, 50
+//    auto image = std::vector<std::vector<Pixel>>();
+//    for (int idx = 0; idx < image_height; ++idx) {
+//        auto row = std::vector<Pixel>(image_width);
+//        image.push_back(std::move(row));
+//    }
+//
+//    // World
+//    HittableList world;
+//
+//    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
+//    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
+//    auto material_left = make_shared<Dielectric>(1.5);
+//    auto material_right = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
+//
+//    world.add(make_shared<Sphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
+//    world.add(make_shared<Sphere>(Point(0.0, 0.0, -1.0), 0.5, material_center));
+//    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
+//    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), -0.45, material_left));
+//    world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
+//
+//    // Camera
+//    Point camera_position(3, 3, 2);
+//    Point view_point(0, 0, -1);
+//    Vector3d camera_up(0, 1, 0);
+//    auto dist_to_focus = (camera_position - view_point).length();
+//    auto vertical_fov = 20;
+//    auto aperture = 1.0;
+//    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+//                     aperture, dist_to_focus);
+//
+//    // Render
+//    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+//    for (int j = image_height - 1; j >= 0; --j) {
+//        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+//        for (int i = 0; i < image_width; ++i) {
+//            Color pixel_color(0, 0, 0);
+//            for (int s = 0; s < samples_per_pixel; ++s) {
+//                auto u = (i + random_double()) / (image_width - 1);
+//                auto v = (j + random_double()) / (image_height - 1);
+//                Ray r = cam.get_ray(u, v);
+//                pixel_color += cast_ray(r, world, max_depth);
+//            }
+//            image[j][i].set(pixel_color, samples_per_pixel);
+//        }
+//    }
+//
+//    // output
+//    for (int j = image_height - 1; j >= 0; --j) {
+//        for (int i = 0; i < image_width; ++i) {
+//            image[j][i].write();
+//        }
+//    }
+//
+//    std::cerr << "\nDone.\n";
+//};
+//
+//void render_many_balls() {
+//    // Image
+//    const auto aspect_ratio = 16.0 / 9.0;
+//    const int image_width = 400; // 3840, 800
+//    const int image_height = static_cast<int>(image_width / aspect_ratio);
+//    const int samples_per_pixel = 5; // 1000, 100
+//    const int max_depth = 5; // 100, 50
+//    auto image = std::vector<std::vector<Pixel>>();
+//    for (int idx = 0; idx < image_height; ++idx) {
+//        auto row = std::vector<Pixel>(image_width);
+//        image.push_back(std::move(row));
+//    }
+//
+//    // World
+//    auto world = random_scene();
+//
+//    // Camera
+//    Point camera_position(13, 2, 3);
+//    Point view_point(0, 0, 0);
+//    Vector3d camera_up(0, 1, 0);
+//    auto dist_to_focus = 10;
+//    auto vertical_fov = 20;
+//    auto aperture = 0.1;
+//    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+//                     aperture, dist_to_focus);
+//
+//    // Render
+//    for (int j = image_height - 1; j >= 0; --j) {
+//        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+//        for (int i = 0; i < image_width; ++i) {
+//            Color pixel_color(0, 0, 0);
+//            for (int s = 0; s < samples_per_pixel; ++s) {
+//                auto u = (i + random_double()) / (image_width - 1);
+//                auto v = (j + random_double()) / (image_height - 1);
+//                Ray r = cam.get_ray(u, v);
+//                pixel_color += cast_ray(r, world, max_depth);
+//            }
+//            image[j][i].set(pixel_color, samples_per_pixel);
+//        }
+//    }
+//
+//    // output
+//    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+//    for (int j = image_height - 1; j >= 0; --j) {
+//        for (int i = 0; i < image_width; ++i) {
+//            image[j][i].write();
+//        }
+//    }
+//
+//    std::cerr << "\nDone.\n";
+//}
 
-    // World
-    HittableList world;
-
-    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
-    auto material_left = make_shared<Dielectric>(1.5);
-    auto material_right = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
-
-    world.add(make_shared<Sphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<Sphere>(Point(0.0, 0.0, -1.0), 0.5, material_center));
-    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
-    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), -0.45, material_left));
-    world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
-
-    // Camera
-    Point camera_position(0, 0, 0);
-    Point view_point(0, 0, -1);
-    Vector3d camera_up(0, 1, 0);
-    auto dist_to_focus = 1;
-    auto vertical_fov = 90;
-    auto aperture = 0;
-    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
-                     aperture, dist_to_focus);
-
-    // Render
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
-    }
-
-    // output
-    for (int j = image_height - 1; j >= 0; --j) {
-        for (int i = 0; i < image_width; ++i) {
-            image[j][i].write();
-        }
-    }
-
-    std::cerr << "\nDone.\n";
-}
-
-void render_hollow_glass_ball_small_fov() {
-    // Image
-    const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 3840; // 3840, 800
-    const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 1000; // 1000, 100
-    const int max_depth = 100; // 100, 50
-    auto image = std::vector<std::vector<Pixel>>();
-    for (int idx = 0; idx < image_height; ++idx) {
-        auto row = std::vector<Pixel>(image_width);
-        image.push_back(std::move(row));
-    }
-
-    // World
-    HittableList world;
-
-    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
-    auto material_left = make_shared<Dielectric>(1.5);
-    auto material_right = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
-
-    world.add(make_shared<Sphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<Sphere>(Point(0.0, 0.0, -1.0), 0.5, material_center));
-    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
-    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), -0.45, material_left));
-    world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
-
-    // Camera
-    Point camera_position(-2, 2, 1);
-    Point view_point(0, 0, -1);
-    Vector3d camera_up(0, 1, 0);
-    auto dist_to_focus = 1;
-    auto vertical_fov = 20;
-    auto aperture = 0;
-    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
-                     aperture, dist_to_focus);
-
-    // Render
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
-    }
-
-    // output
-    for (int j = image_height - 1; j >= 0; --j) {
-        for (int i = 0; i < image_width; ++i) {
-            image[j][i].write();
-        }
-    }
-
-    std::cerr << "\nDone.\n";
-}
-
-void render_hollow_glass_ball_off_focus() {
-    // Image
-    const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 3840; // 3840, 800
-    const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 1000; // 1000, 100
-    const int max_depth = 100; // 100, 50
-    auto image = std::vector<std::vector<Pixel>>();
-    for (int idx = 0; idx < image_height; ++idx) {
-        auto row = std::vector<Pixel>(image_width);
-        image.push_back(std::move(row));
-    }
-
-    // World
-    HittableList world;
-
-    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
-    auto material_left = make_shared<Dielectric>(1.5);
-    auto material_right = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
-
-    world.add(make_shared<Sphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<Sphere>(Point(0.0, 0.0, -1.0), 0.5, material_center));
-    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
-    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), -0.45, material_left));
-    world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
-
-    // Camera
-    Point camera_position(3, 3, 2);
-    Point view_point(0, 0, -1);
-    Vector3d camera_up(0, 1, 0);
-    auto dist_to_focus = (camera_position - view_point).length();
-    auto vertical_fov = 20;
-    auto aperture = 1.0;
-    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
-                     aperture, dist_to_focus);
-
-    // Render
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
-    }
-
-    // output
-    for (int j = image_height - 1; j >= 0; --j) {
-        for (int i = 0; i < image_width; ++i) {
-            image[j][i].write();
-        }
-    }
-
-    std::cerr << "\nDone.\n";
-};
-
-void render_many_balls() {
-    // Image
-    const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 400; // 3840, 800
-    const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 5; // 1000, 100
-    const int max_depth = 5; // 100, 50
-    auto image = std::vector<std::vector<Pixel>>();
-    for (int idx = 0; idx < image_height; ++idx) {
-        auto row = std::vector<Pixel>(image_width);
-        image.push_back(std::move(row));
-    }
-
-    // World
-    auto world = random_scene();
-
-    // Camera
-    Point camera_position(13, 2, 3);
-    Point view_point(0, 0, 0);
-    Vector3d camera_up(0, 1, 0);
-    auto dist_to_focus = 10;
-    auto vertical_fov = 20;
-    auto aperture = 0.1;
-    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
-                     aperture, dist_to_focus);
-
-    // Render
-    for (int j = image_height - 1; j >= 0; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
-            }
-            image[j][i].set(pixel_color, samples_per_pixel);
-        }
-    }
-
-    // output
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
-        for (int i = 0; i < image_width; ++i) {
-            image[j][i].write();
-        }
-    }
-
-    std::cerr << "\nDone.\n";
-}
-
-void render_scene(int current_id, int max_processes) {
+void render_scene(int current_id, int max_processes, const char *output_file) {
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 400; // 3840, 800
@@ -364,7 +379,8 @@ void render_scene(int current_id, int max_processes) {
 
     // Render
     for (int j = start_row; j > end_row; --j) {
-        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+        std::cerr << "Scanlines remaining: " << j - end_row << ' ' << std::flush;
+        auto start = time(nullptr);
         for (int i = 0; i < image_width; ++i) {
             Color pixel_color(0, 0, 0);
             for (int s = 0; s < samples_per_pixel; ++s) {
@@ -375,17 +391,21 @@ void render_scene(int current_id, int max_processes) {
             }
             image[j][i].set(pixel_color, samples_per_pixel);
         }
+        auto end = time(nullptr);
+        std::cerr << "loop time " << end - start << "s" << std::flush;
     }
 
     // output
+    std::ofstream file;
+    file.open(output_file, std::ios::out | std::ios::trunc);
     if (current_id == 0)
-        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+        file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
     for (int j = start_row; j >= end_row; --j) {
         for (int i = 0; i < image_width; ++i) {
-            image[j][i].write();
+            image[j][i].write(file);
         }
     }
-
+    file.close();
     std::cerr << "\nDone.\n";
 }
 
@@ -393,7 +413,26 @@ int main(int argc, char *argv[]) {
     // parse arguments
     if (argc != 2) {
         std::cerr << "Need to specify process count" << std::endl;
+        return 0;
     }
     int max_processes = parse_int(argv[1], strlen(argv[1]));
     std::cerr << "Render will use " << max_processes << " processes." << std::endl;
+
+    // launch real renderer
+#if defined(WINDOWS)
+    if (max_processes == 1) {
+        render_scene(0, 1, "1.ppm");
+    } else {
+        omp_set_num_threads(max_processes);
+#pragma omp parallel for
+        for (int thread_idx = 0; thread_idx < max_processes; ++thread_idx) {
+            std::string file_name = std::to_string(thread_idx) + ".partial";
+            render_scene(thread_idx, max_processes, file_name.c_str());
+        }
+    }
+#else
+    for (int process_idx = 0; process_idx < max_processes; ++process_idx) {
+
+    }
+#endif
 }
