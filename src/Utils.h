@@ -52,6 +52,11 @@ inline double random_double(double min, double max) {
     return min + (max - min) * random_double();
 }
 
+inline double random_double_fixed(double min, double max) {
+    // random real in [min,max).
+    return min + (max - min) * random_double_fixed();
+}
+
 // input
 int parse_int(const char *buf, size_t len) {
     int res = 0;

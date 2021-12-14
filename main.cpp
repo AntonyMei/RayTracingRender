@@ -75,7 +75,7 @@ HittableList random_scene() {
 
                 if (choose_mat < 0.6) {
                     // diffuse
-                    auto albedo = Color::random() * Color::random();
+                    auto albedo = Color::random_fixed() * Color::random_fixed();
                     sphere_material = make_shared<Lambertian>(albedo);
                     world.add(make_shared<Sphere>(center, center.y(), sphere_material));
                 } else if (choose_mat < 0.9) {

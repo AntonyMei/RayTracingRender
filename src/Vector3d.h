@@ -68,8 +68,16 @@ public:
         return {random_double(), random_double(), random_double()};
     }
 
+    inline static Vector3d random_fixed() {
+        return {random_double_fixed(), random_double_fixed(), random_double_fixed()};
+    }
+
     inline static Vector3d random(double min, double max) {
         return {random_double(min, max), random_double(min, max), random_double(min, max)};
+    }
+
+    inline static Vector3d random_fixed(double min, double max) {
+        return {random_double_fixed(min, max), random_double_fixed(min, max), random_double_fixed(min, max)};
     }
 
     bool near_zero() const {
