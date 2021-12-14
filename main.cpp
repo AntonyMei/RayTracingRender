@@ -331,7 +331,7 @@ void render_many_balls() {
     std::cerr << "\nDone.\n";
 }
 
-void render_scene() {
+void render_scene(int current_id, int max_processes) {
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 400; // 3840, 800
@@ -343,12 +343,6 @@ void render_scene() {
         auto row = std::vector<Pixel>(image_width);
         image.push_back(std::move(row));
     }
-
-    // multiprocessing related (id = 0 - max_processes - 1)
-    int current_id, max_processes;
-    std::cin >> current_id;
-    std::cin >> max_processes;
-    int work_load = image_height / max_processes;
 
     // World
     auto world = random_scene();
@@ -363,9 +357,12 @@ void render_scene() {
     SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
                      aperture, dist_to_focus);
 
-    // Render
+    // multiprocessing related (id = 0 - max_processes - 1)
+    int work_load = image_height / max_processes;
     int start_row = image_height - 1 - work_load * current_id;
     int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
+
+    // Render
     for (int j = start_row; j > end_row; --j) {
         std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < image_width; ++i) {
