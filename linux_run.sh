@@ -4,3 +4,4 @@ make clean
 make
 ./Project 32
 ./packager 32
+rm *.partial
