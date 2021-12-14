@@ -2,6 +2,7 @@
 // Created by meiyixuan on 2021-12-09.
 //
 #include <iostream>
+#include <cstdlib>
 
 // basic utilities
 #include "src/Utils.h"
@@ -50,9 +51,9 @@ HittableList random_scene() {
 
     for (int a = -11; a < 11; a++) {
         for (int b = -11; b < 11; b++) {
-            auto choose_mat = random_double();
-            Point center(a + 0.9 * random_double(), 0.15 + 0.1 * random_double(),
-                         b + 0.9 * random_double());
+            auto choose_mat = rand();
+            Point center(a + 0.9 * rand(), 0.15 + 0.1 * rand(),
+                         b + 0.9 * rand());
 
             if ((center - Point(4, 0.2, 0)).length() > 0.9) {
                 shared_ptr<Material> sphere_material;
@@ -279,6 +280,58 @@ void render_hollow_glass_ball_off_focus() {
 };
 
 void render_many_balls() {
+    // Image
+    const auto aspect_ratio = 16.0 / 9.0;
+    const int image_width = 400; // 3840, 800
+    const int image_height = static_cast<int>(image_width / aspect_ratio);
+    const int samples_per_pixel = 5; // 1000, 100
+    const int max_depth = 5; // 100, 50
+    auto image = std::vector<std::vector<Pixel>>();
+    for (int idx = 0; idx < image_height; ++idx) {
+        auto row = std::vector<Pixel>(image_width);
+        image.push_back(std::move(row));
+    }
+
+    // World
+    auto world = random_scene();
+
+    // Camera
+    Point camera_position(13, 2, 3);
+    Point view_point(0, 0, 0);
+    Vector3d camera_up(0, 1, 0);
+    auto dist_to_focus = 10;
+    auto vertical_fov = 20;
+    auto aperture = 0.1;
+    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+                     aperture, dist_to_focus);
+
+    // Render
+    for (int j = image_height - 1; j >= 0; --j) {
+        std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+        for (int i = 0; i < image_width; ++i) {
+            Color pixel_color(0, 0, 0);
+            for (int s = 0; s < samples_per_pixel; ++s) {
+                auto u = (i + random_double()) / (image_width - 1);
+                auto v = (j + random_double()) / (image_height - 1);
+                Ray r = cam.get_ray(u, v);
+                pixel_color += cast_ray(r, world, max_depth);
+            }
+            image[j][i].set(pixel_color, samples_per_pixel);
+        }
+    }
+
+    // output
+    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+    for (int j = image_height - 1; j >= 0; --j) {
+        for (int i = 0; i < image_width; ++i) {
+            image[j][i].write();
+        }
+    }
+
+    std::cerr << "\nDone.\n";
+}
+
+void render_scene() {
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 400; // 3840, 800
