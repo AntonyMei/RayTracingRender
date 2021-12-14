@@ -400,7 +400,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     file.open(output_file, std::ios::out | std::ios::trunc);
     if (current_id == 0)
         file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = start_row; j >= end_row; --j) {
+    for (int j = start_row; j > end_row; --j) {
         for (int i = 0; i < image_width; ++i) {
             image[j][i].write(file);
         }
