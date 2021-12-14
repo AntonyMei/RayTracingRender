@@ -80,7 +80,7 @@ HittableList random_scene() {
                     world.add(make_shared<Sphere>(center, center.y(), sphere_material));
                 } else if (choose_mat < 0.9) {
                     // metal
-                    auto albedo = Color::random(0.5, 1);
+                    auto albedo = Color::random_fixed(0.5, 1);
                     auto fuzz = random_double(0, 0.5);
                     sphere_material = make_shared<Metal>(albedo, fuzz);
                     world.add(make_shared<Sphere>(center, center.y(), sphere_material));
