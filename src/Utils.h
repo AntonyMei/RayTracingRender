@@ -44,9 +44,7 @@ inline double random_double() {
 
 inline double random_double_fixed() {
     // random number in [0, 1), with fixed initial seed
-    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    static std::mt19937 generator(0);
-    return distribution(generator);
+    return rand() / (RAND_MAX + 1.0);
 }
 
 inline double random_double(double min, double max) {
