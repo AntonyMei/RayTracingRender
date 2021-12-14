@@ -51,8 +51,8 @@ inline double random_double(double min, double max) {
 int parse_int(const char *buf, size_t len) {
     int res = 0;
     for (size_t i = 0; i < len; ++i) {
-        res += buf[i] - '0';
         res *= 10;
+        res += buf[i] - '0';
     }
     return res;
 }
