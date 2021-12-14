@@ -420,6 +420,7 @@ int main(int argc, char *argv[]) {
 
     // launch real renderer
 #if defined(WINDOWS)
+
     if (max_processes == 1) {
         render_scene(0, 1, "1.ppm");
     } else {
@@ -430,9 +431,31 @@ int main(int argc, char *argv[]) {
             render_scene(thread_idx, max_processes, file_name.c_str());
         }
     }
-#else
-    for (int process_idx = 0; process_idx < max_processes; ++process_idx) {
 
+#else
+
+    if (max_processes == 1) {
+        render_scene(0, 1, "1.ppm");
+    } else {
+        std::vector<pid_t> pid_list;
+        for (int process_idx = 0; process_idx < max_processes; ++process_idx) {
+            std::string file_name = std::to_string(process_idx) + ".partial";
+            pid_t pid = fork();
+            if (pid != 0) {
+                // parent
+                pid_list.push_back(pid);
+                continue;
+            } else {
+                // child
+                std::cerr << "Worker " << process_idx << " initialized on " << pid << std::endl;
+                render_scene(process_idx, max_processes, file_name.c_str());
+                return 0;
+            }
+        }
+        for (auto pid: pid_list) {
+            waitpid(pid, NULL, 0);
+        }
     }
+
 #endif
 }
