@@ -281,15 +281,21 @@ void render_hollow_glass_ball_off_focus() {
 void render_many_balls() {
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 3840; // 3840, 800
+    const int image_width = 400; // 3840, 800
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 1000; // 1000, 100
-    const int max_depth = 100; // 100, 50
+    const int samples_per_pixel = 5; // 1000, 100
+    const int max_depth = 5; // 100, 50
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
         auto row = std::vector<Pixel>(image_width);
         image.push_back(std::move(row));
     }
+
+    // multiprocessing related (id = 0 - max_processes - 1)
+    int current_id, max_processes;
+    std::cin >> current_id;
+    std::cin >> max_processes;
+    int work_load = image_height / max_processes;
 
     // World
     auto world = random_scene();
@@ -305,8 +311,9 @@ void render_many_balls() {
                      aperture, dist_to_focus);
 
     // Render
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
-    for (int j = image_height - 1; j >= 0; --j) {
+    int start_row = image_height - 1 - work_load * current_id;
+    int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
+    for (int j = start_row; j > end_row; --j) {
         std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
         for (int i = 0; i < image_width; ++i) {
             Color pixel_color(0, 0, 0);
@@ -321,7 +328,9 @@ void render_many_balls() {
     }
 
     // output
-    for (int j = image_height - 1; j >= 0; --j) {
+    if (current_id == 0)
+        std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+    for (int j = start_row; j >= end_row; --j) {
         for (int i = 0; i < image_width; ++i) {
             image[j][i].write();
         }
