@@ -389,6 +389,11 @@ void render_scene(int current_id, int max_processes) {
     std::cerr << "\nDone.\n";
 }
 
-int main() {
-    render_many_balls();
+int main(int argc, char *argv[]) {
+    // parse arguments
+    if (argc != 2) {
+        std::cout << "Need to specify process count" << std::endl;
+    }
+    int max_processes = parse_int(argv[1], strlen(argv[1]));
+    std::cout << "Render will use " << max_processes << " processes." << std::endl;
 }

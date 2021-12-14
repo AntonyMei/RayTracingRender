@@ -47,4 +47,14 @@ inline double random_double(double min, double max) {
     return min + (max - min) * random_double();
 }
 
+// input
+int parse_int(const char *buf, size_t len) {
+    int res = 0;
+    for (size_t i = 0; i < len; ++i) {
+        res += buf[i] - '0';
+        res *= 10;
+    }
+    return res;
+}
+
 #endif //PROJECT_UTILS_H
