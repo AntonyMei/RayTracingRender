@@ -73,10 +73,10 @@ class BVHNode : public Accelerator {
 public:
     BVHNode() = default;
 
-    BVHNode(const HittableList &list, double time0, double time1)
+    BVHNode(HittableList &list, double time0, double time1)
             : BVHNode(list.hittable_list, 0, list.hittable_list.size(), time0, time1) {}
 
-    BVHNode(const std::vector<shared_ptr<Hittable>> &src_objects, size_t start, size_t end,
+    BVHNode(std::vector<shared_ptr<Hittable>> &src_objects, size_t start, size_t end,
             double time0, double time1) {
         // surface-area-heuristic BVH build
         // start inclusive, end exclusive
