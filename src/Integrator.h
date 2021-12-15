@@ -31,7 +31,7 @@ public:
             return {0, 0, 0};
 
         // check intersection
-        if (world.intersect(r, TMIN, inf, hit)) {
+        if (world.hit(r, TMIN, inf, hit)) {
             std::vector<Ray> scattered_list;
             Color attenuation;
             if (hit.mat_ptr->scatter(r, hit, attenuation, scattered_list)) {

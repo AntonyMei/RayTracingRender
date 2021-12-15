@@ -86,7 +86,7 @@ public:
         return (fabs(val[0]) < s) && (fabs(val[1]) < s) && (fabs(val[2]) < s);
     }
 
-private:
+public:
 
     double val[3];
 

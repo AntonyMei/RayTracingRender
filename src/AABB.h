@@ -31,6 +31,22 @@ public:
         return true;
     }
 
+    inline int longest_axis() const {
+        Vector3d length = maximum - minimum;
+        if (length[0] >= length[1] && length[0] >= length[2])
+            return 0;
+        else if (length[1] >= length[0] && length[1] >= length[2])
+            return 1;
+        else
+            return 2;
+    }
+
+    inline double area() const {
+        Vector3d length = maximum - minimum;
+        return 2 * (length[0] * length[1] +
+                    length[0] * length[2] +
+                    length[1] * length[2]);
+    }
 
 private:
     // ranges in three directions (i.e. two points in diagonal)
