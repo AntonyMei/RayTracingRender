@@ -34,7 +34,7 @@
 #include "src/Material.h"
 #include "src/Integrator.h"
 
-HittableList random_scene() {
+HittableList motion_blur_scene() {
     HittableList world;
 
     auto ground_material = make_shared<Lambertian>(Color(0.5, 0.5, 0.5));
@@ -83,6 +83,17 @@ HittableList random_scene() {
     return world;
 }
 
+SimpleCamera motion_blur_camera(double aspect_ratio) {
+    Point camera_position(13, 2, 3);
+    Point view_point(0, 0, 0);
+    Vector3d camera_up(0, 1, 0);
+    auto dist_to_focus = 10.0;
+    auto vertical_fov = 20.0;
+    auto aperture = 0.1;
+    return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+            aperture, dist_to_focus, 0.0, 1.0};
+}
+
 void render_scene(int current_id, int max_processes, const char *output_file) {
     // Image
     const auto aspect_ratio = 16.0 / 9.0;
@@ -97,18 +108,11 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     }
 
     // World
-    HittableList world = random_scene();
+    HittableList world = motion_blur_scene();
     BVHNode world_bvh(world, 0.0, 1.0);
 
     // Camera
-    Point camera_position(13, 2, 3);
-    Point view_point(0, 0, 0);
-    Vector3d camera_up(0, 1, 0);
-    auto dist_to_focus = 10;
-    auto vertical_fov = 20;
-    auto aperture = 0.1;
-    SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
-                     aperture, dist_to_focus, 0.0, 1.0);
+    SimpleCamera cam = motion_blur_camera(aspect_ratio);
 
     // multiprocessing related (id = 0 - max_processes - 1)
     int work_load = image_height / max_processes;
