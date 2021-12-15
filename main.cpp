@@ -96,25 +96,15 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     }
 
     // World
-    HittableList world;
-    auto material_ground = make_shared<Lambertian>(Color(0.8, 0.8, 0.0));
-    auto material_center = make_shared<Lambertian>(Color(0.1, 0.2, 0.5));
-    auto material_left = make_shared<Dielectric>(1.5);
-    auto material_right = make_shared<Metal>(Color(0.8, 0.6, 0.2), 0.0);
-
-    world.add(make_shared<Sphere>(Point(0.0, -100.5, -1.0), 100.0, material_ground));
-    world.add(make_shared<Sphere>(Point(0.0, 0.0, -1.0), 0.5, material_center));
-    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), 0.5, material_left));
-    world.add(make_shared<Sphere>(Point(-1.0, 0.0, -1.0), -0.45, material_left));
-    world.add(make_shared<Sphere>(Point(1.0, 0.0, -1.0), 0.5, material_right));
+    HittableList world = random_scene();
 
     // Camera
-    Point camera_position(3, 3, 2);
-    Point view_point(0, 0, -1);
+    Point camera_position(13, 2, 3);
+    Point view_point(0, 0, 0);
     Vector3d camera_up(0, 1, 0);
-    auto dist_to_focus = (camera_position - view_point).length();
+    auto dist_to_focus = 10;
     auto vertical_fov = 20;
-    auto aperture = 1.0;
+    auto aperture = 0.1;
     SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
                      aperture, dist_to_focus, 0.0, 1.0);
 
