@@ -191,11 +191,11 @@ private:
         return box_compare(a, b, 0);
     }
 
-    static bool box_y_compare(const shared_ptr<Hittable> &a, const shared_ptr<Hittable> &b) {
+    static inline bool box_y_compare(const shared_ptr<Hittable> &a, const shared_ptr<Hittable> &b) {
         return box_compare(a, b, 1);
     }
 
-    static bool box_z_compare(const shared_ptr<Hittable> &a, const shared_ptr<Hittable> &b) {
+    static inline bool box_z_compare(const shared_ptr<Hittable> &a, const shared_ptr<Hittable> &b) {
         return box_compare(a, b, 2);
     }
 
