@@ -52,11 +52,13 @@ HittableList random_scene() {
                     // diffuse
                     auto albedo = Color::random_fixed() * Color::random_fixed();
                     sphere_material = make_shared<Lambertian>(albedo);
-                    world.add(make_shared<Sphere>(center, center.y(), sphere_material));
+                    auto center2 = center + Vector3d(0, random_double_fixed(0, .5), 0);
+                    world.add(make_shared<MovingSphere>(center, center2, 0.0, 1.0,
+                                                        center.y(), sphere_material));
                 } else if (choose_mat < 0.9) {
                     // metal
                     auto albedo = Color::random_fixed(0.5, 1);
-                    auto fuzz = random_double(0, 0.5);
+                    auto fuzz = random_double_fixed(0, 0.5);
                     sphere_material = make_shared<Metal>(albedo, fuzz);
                     world.add(make_shared<Sphere>(center, center.y(), sphere_material));
                 } else {
@@ -114,7 +116,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     auto vertical_fov = 20;
     auto aperture = 1.0;
     SimpleCamera cam(camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
-                     aperture, dist_to_focus);
+                     aperture, dist_to_focus, 0.0, 1.0);
 
     // multiprocessing related (id = 0 - max_processes - 1)
     int work_load = image_height / max_processes;

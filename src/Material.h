@@ -25,7 +25,7 @@ public:
             scatter_direction = hit.normal;
 
         // generate scattered rays
-        scattered_rays.emplace_back(hit.hit_point, scatter_direction);
+        scattered_rays.emplace_back(hit.hit_point, scatter_direction, ray_in.time());
         attenuation = albedo;
         return true;
     }
@@ -47,7 +47,7 @@ public:
         reflected_dir += fuzz * random_in_unit_sphere();
 
         // generate rays
-        scattered_rays.emplace_back(hit.hit_point, reflected_dir);
+        scattered_rays.emplace_back(hit.hit_point, reflected_dir, r_in.time());
         attenuation = albedo;
         return (dot(reflected_dir, hit.normal) > 0);
     }
@@ -79,7 +79,7 @@ public:
         else
             direction = refract(unit_direction, hit.normal, refraction_ratio);
 
-        scattered_rays.emplace_back(hit.hit_point, direction);
+        scattered_rays.emplace_back(hit.hit_point, direction, ray_in.time());
         return true;
     }
 

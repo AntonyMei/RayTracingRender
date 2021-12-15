@@ -20,11 +20,12 @@ protected:
 class SimpleCamera : public Camera {
 public:
     SimpleCamera(Point cam_pos, Point cam_target, Vector3d cam_up,
-                 double vertical_fov, double aspect_ratio, double aperture,
-                 double focus_dist) {
+                 double vertical_fov, double aspect_ratio,
+                 double aperture, double focus_dist,
+                 double _time0 = 0, double _time1 = 0) {
         // if no blur: aperture = 0.0, focus_dist = 1.0
         // a nice one: aperture = 0.1, focus_dist = 10
-        // if larger blur: aperture = 2.0, focus_dist = len(cam_pos - cam_target)
+        // if larger blur: aperture = 2.0, focus_dist = dist to focus plane
 
         // set intrinsic
         auto theta = deg2rad(vertical_fov);
@@ -43,6 +44,8 @@ public:
         vertical = focus_dist * viewport_height * v;
         lower_left_corner = origin - horizontal / 2 - vertical / 2 - focus_dist * w;
         lens_radius = aperture / 2;
+        time0 = _time0;
+        time1 = _time1;
     }
 
     Ray get_ray(double s, double t) const override {
@@ -51,7 +54,8 @@ public:
         Vector3d offset = u * rd.x() + v * rd.y();
 
         return {origin + offset,
-                lower_left_corner + s * horizontal + t * vertical - origin - offset};
+                lower_left_corner + s * horizontal + t * vertical - origin - offset,
+                random_double(time0, time1)};
     }
 
 private:
@@ -59,6 +63,8 @@ private:
     Vector3d u, v, w;
     // radius = 0: no off-focus blur, 1.0: large blur
     double lens_radius;
+    // shutter open/close times
+    double time0, time1;
 };
 
 #endif //PROJECT_CAMERA_H

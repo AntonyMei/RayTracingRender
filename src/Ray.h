@@ -8,14 +8,17 @@
 
 class Ray {
 public:
-    Ray() : o(), d() {}
+    Ray() : o(), d(), tm{} {}
 
-    Ray(const Point &origin, const Vector3d &direction) : o(origin), d(direction) {}
+    Ray(const Point &origin, const Vector3d &direction, double time = 0.0) :
+            o(origin), d(direction), tm(time) {}
 
     // utils
     Point origin() const { return o; }
 
     Vector3d direction() const { return d; }
+
+    double time() const { return tm; }
 
     Point at(double t) const { return o + t * d; }
 
@@ -23,6 +26,7 @@ private:
     // origin and direction
     Point o;
     Vector3d d;
+    double tm;
 };
 
 
