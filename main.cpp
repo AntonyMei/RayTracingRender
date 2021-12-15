@@ -88,7 +88,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 400; // 3840, 800
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 50; // 1000, 100
+    const int samples_per_pixel = 200; // 1000, 100
     const int max_depth = 10; // 100, 50
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
@@ -98,7 +98,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
 
     // World
     HittableList world = random_scene();
-//    BVHNode world_bvh(world, 0.0, 1.0);
+    BVHNode world_bvh(world, 0.0, 1.0);
 
     // Camera
     Point camera_position(13, 2, 3);
@@ -116,7 +116,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
 
     // Render
-    PathTracingIntegrator integrator(world);
+    PathTracingIntegrator integrator(world_bvh);
     for (int j = start_row; j > end_row; --j) {
         std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
         auto start = time(nullptr);
