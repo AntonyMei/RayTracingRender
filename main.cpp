@@ -31,33 +31,7 @@
 #include "src/Hittable.h"
 #include "src/Accelerator.h"
 #include "src/Material.h"
-
-Color cast_ray(const Ray &r, const Accelerator &world, int remaining_bounce) {
-    Hit hit;
-
-    // If we've exceeded the ray bounce limit, no more light is gathered.
-    if (remaining_bounce <= 0)
-        return {0, 0, 0};
-
-    // check intersection
-    if (world.intersect(r, TMIN, inf, hit)) {
-        std::vector<Ray> scattered_list;
-        Color attenuation;
-        if (hit.mat_ptr->scatter(r, hit, attenuation, scattered_list)) {
-            Color scatter_color;
-            for (const auto &scattered: scattered_list) {
-                scatter_color += cast_ray(scattered, world, remaining_bounce - 1);
-            }
-            scatter_color /= static_cast<double>(scattered_list.size());
-            return attenuation * scatter_color;
-        }
-        return {0, 0, 0};
-    }
-
-    Vector3d unit_direction = normalize(r.direction());
-    auto t = 0.5 * (unit_direction.y() + 1.0);
-    return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
-}
+#include "src/Integrator.h"
 
 HittableList random_scene() {
     HittableList world;
@@ -148,6 +122,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
 
     // Render
+    PathTracingIntegrator integrator(world);
     for (int j = start_row; j > end_row; --j) {
         std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
         auto start = time(nullptr);
@@ -157,7 +132,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
                 auto u = (i + random_double()) / (image_width - 1);
                 auto v = (j + random_double()) / (image_height - 1);
                 Ray r = cam.get_ray(u, v);
-                pixel_color += cast_ray(r, world, max_depth);
+                pixel_color += integrator.cast_ray(r, max_depth);
             }
             image[j][i].set(pixel_color, samples_per_pixel);
         }
