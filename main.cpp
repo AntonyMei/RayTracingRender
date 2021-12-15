@@ -28,6 +28,7 @@
 // classes
 #include "src/Pixel.h"
 #include "src/Camera.h"
+#include "src/AABB.h"
 #include "src/Hittable.h"
 #include "src/Accelerator.h"
 #include "src/Material.h"

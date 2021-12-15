@@ -33,6 +33,8 @@ public:
 
     virtual bool hit(const Ray &ray, double t_min, double t_max, Hit &hit) const = 0;
 
+    virtual bool bounding_box(double time0, double time1, AABB &output_box) const = 0;
+
 protected:
     shared_ptr<Material> mat_ptr;
 };
@@ -84,6 +86,11 @@ public:
         }
     }
 
+    bool bounding_box(double time0, double time1, AABB &output_box) const override {
+        output_box = AABB(c - Vector3d(r, r, r), c + Vector3d(r, r, r));
+        return true;
+    }
+
 private:
     Point c;
     double r;
@@ -93,7 +100,7 @@ class MovingSphere : public Hittable {
 public:
     MovingSphere() = default;
 
-    MovingSphere(Point cen0, Point cen1, double _time0, double _time1, double r, const shared_ptr<Material>& m)
+    MovingSphere(Point cen0, Point cen1, double _time0, double _time1, double r, const shared_ptr<Material> &m)
             : Hittable(m), center0(cen0), center1(cen1), time0(_time0), time1(_time1), radius(r) {};
 
     bool hit(const Ray &ray, double t_min, double t_max, Hit &hit) const override {
@@ -128,6 +135,15 @@ public:
                 return true;
             } else { return false; }
         }
+    }
+
+    bool bounding_box(double _time0, double _time1, AABB &output_box) const override {
+        AABB box0(center(_time0) - Vector3d(radius, radius, radius),
+                  center(_time0) + Vector3d(radius, radius, radius));
+        AABB box1(center(_time1) - Vector3d(radius, radius, radius),
+                  center(_time1) + Vector3d(radius, radius, radius));
+        output_box = surrounding_box(box0, box1);
+        return true;
     }
 
     Point center(double time) const {
