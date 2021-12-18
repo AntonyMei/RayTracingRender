@@ -57,6 +57,11 @@ inline double random_double_fixed(double min, double max) {
     return min + (max - min) * random_double_fixed();
 }
 
+inline int random_int(int min, int max) {
+    // Returns a random integer in [min,max].
+    return static_cast<int>(random_double(min, max + 1));
+}
+
 // input
 int parse_int(const char *buf, size_t len) {
     int res = 0;

@@ -54,4 +54,16 @@ private:
     std::shared_ptr<Texture> even;
 };
 
+class PerlinTexture : public Texture {
+public:
+    PerlinTexture() = default;
+
+    Color color(double u, double v, const Point &p) const override {
+        return Color(1, 1, 1) * noise.noise(p);
+    }
+
+private:
+    PerlinNoise noise;
+};
+
 #endif //PROJECT_TEXTURE_H
