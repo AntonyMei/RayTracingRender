@@ -58,12 +58,17 @@ class PerlinTexture : public Texture {
 public:
     PerlinTexture() = default;
 
+    explicit PerlinTexture(double _scale) : scale(_scale) {}
+
     Color color(double u, double v, const Point &p) const override {
-        return Color(1, 1, 1) * noise.noise(p);
+        return Color(1, 1, 1) * noise.noise(p * scale);
     }
 
 private:
+    // scale = 1: very low freq
+    // scale = 4: moderate frequency
     PerlinNoise noise;
+    double scale{1};
 };
 
 #endif //PROJECT_TEXTURE_H

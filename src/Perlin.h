@@ -1,6 +1,7 @@
 //
 // Created by meiyixuan on 2021-12-18.
-// Perlin noise generator uses code from Peter Shirley
+// Perlin noise generator uses code from Peter Shirley.
+// Warning: Perlin noise generator must have identical seeds across all processes.
 //
 
 #ifndef PROJECT_PERLIN_H
