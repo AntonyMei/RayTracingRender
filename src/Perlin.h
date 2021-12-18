@@ -10,7 +10,7 @@ public:
     PerlinNoise() {
         rand_double = new double[point_count];
         for (int i = 0; i < point_count; ++i) {
-            rand_double[i] = random_double();
+            rand_double[i] = random_double_fixed();
         }
 
         perm_x = perlin_generate_perm();
@@ -53,7 +53,7 @@ private:
 
     static void permute(int *p, int n) {
         for (int i = n - 1; i > 0; i--) {
-            int target = random_int(0, i);
+            int target = random_int_fixed(0, i);
             int tmp = p[i];
             p[i] = p[target];
             p[target] = tmp;
