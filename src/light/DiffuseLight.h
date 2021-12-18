@@ -2,11 +2,8 @@
 // Created by meiyixuan on 2021-12-18.
 //
 
-#ifndef PROJECT_LIGHT_H
-#define PROJECT_LIGHT_H
-
-class Light : public Material {
-};
+#ifndef PROJECT_DIFFUSELIGHT_H
+#define PROJECT_DIFFUSELIGHT_H
 
 class DiffuseLight : public Light {
 public:
@@ -32,4 +29,4 @@ private:
     double intensity{1};
 };
 
-#endif //PROJECT_LIGHT_H
+#endif //PROJECT_DIFFUSELIGHT_H

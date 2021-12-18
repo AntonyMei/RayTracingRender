@@ -1,23 +1,9 @@
 //
-// Created by meiyixuan on 2021-12-15.
+// Created by meiyixuan on 2021-12-18.
 //
 
-#ifndef PROJECT_INTEGRATOR_H
-#define PROJECT_INTEGRATOR_H
-
-class Integrator {
-public:
-    Integrator() = delete;
-
-    explicit Integrator(const Accelerator &scene, const Skybox &_skybox)
-            : world(scene), skybox(_skybox) {}
-
-    virtual Color cast_ray(const Ray &r, int remaining_bounce) const = 0;
-
-protected:
-    const Accelerator &world;
-    const Skybox &skybox;
-};
+#ifndef PROJECT_PATHTRACINGINTEGRATOR_H
+#define PROJECT_PATHTRACINGINTEGRATOR_H
 
 class PathTracingIntegrator : Integrator {
 public:
@@ -54,4 +40,4 @@ public:
     }
 };
 
-#endif //PROJECT_INTEGRATOR_H
+#endif //PROJECT_PATHTRACINGINTEGRATOR_H

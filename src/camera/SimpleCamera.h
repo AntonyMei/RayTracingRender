@@ -1,21 +1,9 @@
 //
-// Created by meiyixuan on 2021-12-11.
+// Created by meiyixuan on 2021-12-18.
 //
 
-#ifndef PROJECT_CAMERA_H
-#define PROJECT_CAMERA_H
-
-class Camera {
-public:
-    virtual Ray get_ray(double u, double v) const = 0;
-
-protected:
-    // camera extrinsic
-    Point origin;
-    Point lower_left_corner;
-    Vector3d horizontal;
-    Vector3d vertical;
-};
+#ifndef PROJECT_SIMPLECAMERA_H
+#define PROJECT_SIMPLECAMERA_H
 
 class SimpleCamera : public Camera {
 public:
@@ -71,4 +59,4 @@ private:
     double time0, time1;
 };
 
-#endif //PROJECT_CAMERA_H
+#endif //PROJECT_SIMPLECAMERA_H

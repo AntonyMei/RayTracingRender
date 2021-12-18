@@ -1,47 +1,7 @@
 //
 // Created by meiyixuan on 2021-12-09.
 //
-
-// standard libraries
-#include <fstream>
-#include <iostream>
-#include <cstdlib>
-#include <cstring>
-#include <string>
-#include <ctime>
-
-// multiprocessing / multithreading
-#ifdef WINDOWS
-
-#include <omp.h>
-
-#else
-
-#include <unistd.h>
-#include <sys/wait.h>
-
-#endif
-
-// external libraries
-#include "ext/stb_image/stb_image_header.h"
-
-// basic utilities
-#include "src/Utils.h"
-#include "src/Vector3d.h"
-#include "src/Perlin.h"
-#include "src/Ray.h"
-
-// classes
-#include "src/Pixel.h"
-#include "src/Camera.h"
-#include "src/AABB.h"
-#include "src/Hittable.h"
-#include "src/Accelerator.h"
-#include "src/Texture.h"
-#include "src/Material.h"
-#include "src/Light.h"
-#include "src/Skybox.h"
-#include "src/Integrator.h"
+#include "Headers.h"
 
 // scenes with global light
 HittableList motion_blur_scene() {
