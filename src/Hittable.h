@@ -16,6 +16,8 @@ struct Hit {
     Vector3d normal;
     std::shared_ptr<Material> mat_ptr;
     double t{0};
+    double u{0};
+    double v{0};
     bool front_face{false};
 
     inline void set_face_normal(const Ray &r, const Vector3d &n) {
@@ -71,6 +73,7 @@ public:
             Vector3d normal = (hit.hit_point - c) / r;
             hit.set_face_normal(ray, normal);
             hit.mat_ptr = mat_ptr;
+            get_sphere_uv(normal, hit.u, hit.v);
             return true;
         } else {
             // may use larger root
@@ -81,6 +84,7 @@ public:
                 Vector3d normal = (hit.hit_point - c) / r;
                 hit.set_face_normal(ray, normal);
                 hit.mat_ptr = mat_ptr;
+                get_sphere_uv(normal, hit.u, hit.v);
                 return true;
             } else { return false; }
         }
@@ -94,6 +98,20 @@ public:
 private:
     Point c;
     double r;
+
+    static void get_sphere_uv(const Point &outward_normal, double &u, double &v) {
+        // outward_normal: a given point on the sphere of radius one, centered at the origin.
+        // u: returned value [0,1] of angle around the Y axis from X=-1.
+        // v: returned value [0,1] of angle from Y=-1 to Y=+1.
+
+        // calculate parameter
+        auto theta = acos(-outward_normal.y());
+        auto phi = atan2(-outward_normal.z(), outward_normal.x()) + pi;
+
+        // calculate uv
+        u = phi / (2 * pi);
+        v = theta / pi;
+    }
 };
 
 class MovingSphere : public Hittable {

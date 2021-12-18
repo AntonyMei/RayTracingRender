@@ -1,3 +1,5 @@
+#include <utility>
+
 //
 // Created by meiyixuan on 2021-12-11.
 //
@@ -13,9 +15,9 @@ public:
 
 class Lambertian : public Material {
 public:
-    explicit Lambertian(const Color &a) : albedo(a) {}
+    explicit Lambertian(const Color &a) : albedo(std::make_shared<ColorTexture>(a)) {}
 
-    Color get_albedo() { return albedo; }
+    explicit Lambertian(std::shared_ptr<Texture> a) : albedo(std::move(a)) {}
 
     bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
                  std::vector<Ray> &scattered_rays) const override {
@@ -26,12 +28,12 @@ public:
 
         // generate scattered rays
         scattered_rays.emplace_back(hit.hit_point, scatter_direction, ray_in.time());
-        attenuation = albedo;
+        attenuation = albedo->color(hit.u, hit.v, hit.hit_point);
         return true;
     }
 
 private:
-    Color albedo;
+    std::shared_ptr<Texture> albedo;
 };
 
 class Metal : public Material {
