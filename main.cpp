@@ -89,14 +89,21 @@ HittableList motion_blur_scene() {
 }
 
 SimpleCamera motion_blur_camera(double aspect_ratio) {
+    // basic settings
     Point camera_position(13, 2, 3);
     Point view_point(0, 0, 0);
     Vector3d camera_up(0, 1, 0);
-    auto dist_to_focus = 10.0;
+    // fov
     auto vertical_fov = 20.0;
+    // off focus blur
+    auto dist_to_focus = 10.0;
     auto aperture = 0.1;
+    // motion blur (0.0 - 1.0)
+    auto shutter_open = 0.0;
+    auto shutter_close = 0.2;
+
     return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
-            aperture, dist_to_focus, 0.0, 1.0};
+            aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
 void render_scene(int current_id, int max_processes, const char *output_file) {
