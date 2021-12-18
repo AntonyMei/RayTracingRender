@@ -142,7 +142,7 @@ SimpleCamera two_spheres_camera(double aspect_ratio) {
 HittableList two_perlin_spheres_scene() {
     HittableList objects;
 
-    auto perlin_texture = make_shared<PerlinTexture>(4);
+    auto perlin_texture = make_shared<MarbleTexture>(4);
     objects.add(make_shared<Sphere>(Point(0, -1000, 0), 1000,
                                     make_shared<Lambertian>(perlin_texture)));
     objects.add(make_shared<Sphere>(Point(0, 2, 0), 2,

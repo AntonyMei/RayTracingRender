@@ -61,6 +61,8 @@ public:
     explicit PerlinTexture(double _scale) : scale(_scale) {}
 
     Color color(double u, double v, const Point &p) const override {
+        // if we use "Color(1,1,1) * 0.5 * (1.0 + noise.noise(scale * p))",
+        // we will get a lighter looking Perlin texture.
         return Color(1, 1, 1) * noise.turbulence(scale * p);
     }
 
@@ -69,6 +71,22 @@ private:
     // scale = 4: moderate frequency
     PerlinNoise noise;
     double scale{1};
+};
+
+class MarbleTexture : public Texture {
+public:
+    MarbleTexture() = default;
+
+    explicit MarbleTexture(double _scale) : scale(_scale) {}
+
+    Color color(double u, double v, const Point &p) const override {
+        // This will render a marble texture.
+        return Color(1, 1, 1) * 0.5 * (1 + sin(scale * p.z() + 10 * noise.turbulence(p)));
+    }
+
+private:
+    PerlinNoise noise;
+    double scale{4};
 };
 
 #endif //PROJECT_TEXTURE_H
