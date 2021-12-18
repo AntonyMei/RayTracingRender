@@ -43,7 +43,7 @@
 #include "src/Skybox.h"
 #include "src/Integrator.h"
 
-// scenes w/o lights (only background light)
+// scenes with global light
 HittableList motion_blur_scene() {
     HittableList world;
 
@@ -211,7 +211,46 @@ SimpleCamera earth_camera(double aspect_ratio) {
             aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
-// scenes with light
+SimpleSkybox global_light_skybox() { return {}; }
+
+// scenes w/o global light
+HittableList simple_light_scene() {
+    HittableList objects;
+
+    // objects
+    auto marble_texture = make_shared<MarbleTexture>(4);
+    objects.add(make_shared<Sphere>(Point(0, -1000, 0), 1000,
+                                    make_shared<Lambertian>(marble_texture)));
+    objects.add(make_shared<Sphere>(Point(0, 2, 0), 2,
+                                    make_shared<Lambertian>(marble_texture)));
+
+    // light
+    auto light_mat = make_shared<DiffuseLight>(Color(1, 1, 1), 4);
+    objects.add(make_shared<XYRectangle>(3, 5, 1, 3, -2, light_mat));
+
+    return objects;
+}
+
+SimpleCamera simple_light_camera(double aspect_ratio) {
+    // basic settings
+    Point camera_position(26, 3, 6);
+    Point view_point(0, 2, 0);
+    Vector3d camera_up(0, 1, 0);
+    // fov
+    auto vertical_fov = 20.0;
+    // off focus blur
+    auto dist_to_focus = 10.0;
+    auto aperture = 0.0;
+    // motion blur (0.0 - 1.0)
+    auto shutter_open = 0.0;
+    auto shutter_close = 1.0;
+
+    return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+            aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox no_global_light_skybox() { return ConstantSkybox({0, 0, 0}); }
+
 
 void render_scene(int current_id, int max_processes, const char *output_file) {
     // Image settings
@@ -219,7 +258,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     const auto aspect_ratio = 16.0 / 9.0;
     const int image_width = 400; // 3840, 800
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 100; // 1000, 100
+    const int samples_per_pixel = 100; // 1000, 100 (x4 if no global light)
     const int max_depth = 25; // 100, 50
 #else
     const auto aspect_ratio = 16.0 / 9.0;
@@ -236,19 +275,14 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
         image.push_back(std::move(row));
     }
 
-    // World & camera
-    // Note that motion blur objects should be created with 0.0 - 1.0.
-    // Control motion blur with camera's shutter.
-    HittableList world = earth_scene();
-    SimpleCamera cam = earth_camera(aspect_ratio);
-
+    // World, camera and skybox
+    // 1. Note that motion blur objects should be created with 0.0 - 1.0.
+    //    Control motion blur with camera's shutter.
+    // 2. use global_light_skybox if no other lights enabled
+    HittableList world = simple_light_scene();
+    SimpleCamera cam = simple_light_camera(aspect_ratio);
+    auto skybox = no_global_light_skybox();
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
-
-    // Skybox
-    // use "SimpleSkybox skybox;" for scenes with no lights
-    // SimpleSkybox skybox;
-    ConstantSkybox skybox({0, 0, 0});
-
 
     // multiprocessing related (id = 0 - max_processes - 1)
     int work_load = image_height / max_processes;

@@ -10,10 +10,12 @@ class Light : public Material {
 
 class DiffuseLight : public Light {
 public:
-    explicit DiffuseLight(std::shared_ptr<Texture> texture) : emit_texture(std::move(texture)) {}
+    explicit DiffuseLight(std::shared_ptr<Texture> texture, double _intensity = 1)
+            : emit_texture(std::move(texture)), intensity(_intensity) {}
 
-    explicit DiffuseLight(Color emit_color) :
-            emit_texture(std::make_shared<ColorTexture>(emit_color)) {}
+    explicit DiffuseLight(Color emit_color, double _intensity = 1) :
+            emit_texture(std::make_shared<ColorTexture>(emit_color)),
+            intensity(_intensity) {}
 
     bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
                  std::vector<Ray> &scattered_rays) const override {
@@ -22,11 +24,12 @@ public:
     }
 
     Color emit(double u, double v, const Point &p) const override {
-        return emit_texture->uv_color(u, v, p);
+        return emit_texture->uv_color(u, v, p) * intensity;
     }
 
 private:
     std::shared_ptr<Texture> emit_texture;
+    double intensity{1};
 };
 
 #endif //PROJECT_LIGHT_H
