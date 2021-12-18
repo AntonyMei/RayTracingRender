@@ -31,7 +31,7 @@ public:
         // initialize
         auto sum = 0.0;
         auto cur_point = p;
-        auto weight = 0.5;
+        auto weight = 1.0;
 
         // weighted sum of samples
         for (int i = 0; i < sample_depth; i++) {
