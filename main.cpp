@@ -249,7 +249,7 @@ SimpleCamera simple_light_camera(double aspect_ratio) {
             aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
-HittableList cornell_box_scene() {
+HittableList empty_cornell_box_scene() {
     HittableList objects;
 
     auto red = make_shared<Lambertian>(Color(.65, .05, .05));
@@ -267,7 +267,7 @@ HittableList cornell_box_scene() {
     return objects;
 }
 
-SimpleCamera cornell_box_camera(double aspect_ratio) {
+SimpleCamera empty_cornell_box_camera(double aspect_ratio) {
     // basic settings
     aspect_ratio = 1.0;
     Point camera_position(278, 278, -800);
@@ -316,8 +316,8 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     // 1. Note that motion blur objects should be created with 0.0 - 1.0.
     //    Control motion blur with camera's shutter.
     // 2. use global_light_skybox if no other lights enabled
-    HittableList world = cornell_box_scene();
-    SimpleCamera cam = cornell_box_camera(aspect_ratio);
+    HittableList world = empty_cornell_box_scene();
+    SimpleCamera cam = empty_cornell_box_camera(aspect_ratio);
     auto skybox = no_global_light_skybox();
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
