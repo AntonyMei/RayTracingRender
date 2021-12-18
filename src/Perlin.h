@@ -27,7 +27,23 @@ public:
         delete[] perm_z;
     }
 
+    double turbulence(const Point &p, int sample_depth = 10) const {
+        // initialize
+        auto sum = 0.0;
+        auto cur_point = p;
+        auto weight = 0.5;
+
+        // weighted sum of samples
+        for (int i = 0; i < sample_depth; i++) {
+            sum += weight * noise(cur_point);
+            weight *= 0.5;
+            cur_point *= 2;
+        }
+        return fabs(sum);
+    }
+
     double noise(const Point &p) const {
+        // only one sample from perlin noise
         auto u = p.x() - floor(p.x());
         auto v = p.y() - floor(p.y());
         auto w = p.z() - floor(p.z());
