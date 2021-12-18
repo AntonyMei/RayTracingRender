@@ -5,14 +5,6 @@
 #ifndef PROJECT_UTILS_H
 #define PROJECT_UTILS_H
 
-// includes
-#include <cmath>
-#include <limits>
-#include <memory>
-#include <vector>
-#include <random>
-
-
 // memory
 using std::shared_ptr;
 using std::make_shared;
@@ -46,7 +38,7 @@ inline double random_double_fixed() {
     // random number in [0, 1), with fixed initial seed
     // This function is thread-identical, and should be used in
     // perlin noise and random scene generation.
-     return rand() / (RAND_MAX + 1.0);
+    return rand() / (RAND_MAX + 1.0);
 }
 
 inline double random_double(double min, double max) {

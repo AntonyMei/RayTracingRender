@@ -6,10 +6,6 @@
 #ifndef PROJECT_ACCELERATOR_H
 #define PROJECT_ACCELERATOR_H
 
-#include <memory>
-#include <vector>
-#include <algorithm>
-
 using std::shared_ptr;
 using std::make_shared;
 

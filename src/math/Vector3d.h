@@ -6,9 +6,6 @@
 #ifndef PROJECT_VECTOR3D_H
 #define PROJECT_VECTOR3D_H
 
-#include <cmath>
-#include <iostream>
-
 class Vector3d {
 public:
     // constructors
@@ -153,7 +150,7 @@ inline Vector3d normalize(Vector3d v) {
 
 Vector3d random_in_unit_disk() {
     while (true) {
-        auto p = Vector3d(random_double(-1,1), random_double(-1,1), 0);
+        auto p = Vector3d(random_double(-1, 1), random_double(-1, 1), 0);
         if (p.squared_length() >= 1) continue;
         return p;
     }

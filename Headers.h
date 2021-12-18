@@ -12,6 +12,12 @@
 #include <cstring>
 #include <string>
 #include <ctime>
+#include <algorithm>
+#include <memory>
+#include <vector>
+#include <cmath>
+#include <limits>
+#include <random>
 
 // multiprocessing / multithreading
 #ifdef WINDOWS
