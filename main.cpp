@@ -1,6 +1,8 @@
 //
 // Created by meiyixuan on 2021-12-09.
 //
+
+// standard libraries
 #include <fstream>
 #include <iostream>
 #include <cstdlib>
@@ -19,6 +21,9 @@
 #include <sys/wait.h>
 
 #endif
+
+// external libraries
+#include "ext/stb_image/stb_image_header.h"
 
 // basic utilities
 #include "src/Utils.h"

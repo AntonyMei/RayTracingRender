@@ -28,7 +28,7 @@ public:
 
         // generate scattered rays
         scattered_rays.emplace_back(hit.hit_point, scatter_direction, ray_in.time());
-        attenuation = albedo->color(hit.u, hit.v, hit.hit_point);
+        attenuation = albedo->uv_color(hit.u, hit.v, hit.hit_point);
         return true;
     }
 
