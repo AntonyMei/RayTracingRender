@@ -61,7 +61,7 @@ public:
     explicit PerlinTexture(double _scale) : scale(_scale) {}
 
     Color color(double u, double v, const Point &p) const override {
-        return Color(1, 1, 1) * noise.noise(p * scale);
+        return Color(1, 1, 1) * 0.5 * (noise.noise(p * scale) + 1.0);
     }
 
 private:
