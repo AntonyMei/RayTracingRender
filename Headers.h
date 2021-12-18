@@ -94,5 +94,6 @@
 #include "src/scenes/SimpleLight.h"
 #include "src/scenes/CornellBoxEmpty.h"
 #include "src/scenes/CornellBoxTwoBlocks.h"
+#include "src/scenes/CornellBox.h"
 
 #endif //PROJECT_HEADERS_H
