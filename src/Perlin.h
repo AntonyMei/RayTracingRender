@@ -27,7 +27,7 @@ public:
         delete[] perm_z;
     }
 
-    double turbulence(const Point &p, int sample_depth = 10) const {
+    double turbulence(const Point &p, int sample_depth = 7) const {
         // initialize
         auto sum = 0.0;
         auto cur_point = p;
