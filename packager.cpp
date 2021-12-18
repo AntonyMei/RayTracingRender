@@ -1,11 +1,8 @@
 //
 // Created by meiyixuan on 2021-12-14.
 //
-#include <fstream>
-#include <iostream>
-#include <cstring>
-#include <string>
-#include "src/math/Utils.h"
+
+#include "Headers.h"
 
 using namespace std;
 
