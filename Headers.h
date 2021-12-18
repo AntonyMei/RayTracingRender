@@ -81,5 +81,13 @@
 #include "src/skybox/ConstantSkybox.h"
 // integrator
 #include "src/integrator/PathTracingIntegrator.h"
+// scenes
+#include "src/scenes/MotionBlur.h"
+#include "src/scenes/MotionBlurChecker.h"
+#include "src/scenes/TwoCheckerSpheres.h"
+#include "src/scenes/TwoMarbleSpheres.h"
+#include "src/scenes/Earth.h"
+#include "src/scenes/SimpleLight.h"
+#include "src/scenes/CornellBoxEmpty.h"
 
 #endif //PROJECT_HEADERS_H
