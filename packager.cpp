@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cstring>
 #include <string>
-#include "src/core/Utils.h"
+#include "src/math/Utils.h"
 
 using namespace std;
 
@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 
         // parse
         string line;
-        while(getline(input,line)){
+        while (getline(input, line)) {
             output << line << "\n";
         }
 
