@@ -281,7 +281,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     // 2. use global_light_skybox if no other lights enabled
     HittableList world = simple_light_scene();
     SimpleCamera cam = simple_light_camera(aspect_ratio);
-    auto skybox = global_light_skybox();
+    auto skybox = no_global_light_skybox();
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
     // multiprocessing related (id = 0 - max_processes - 1)
