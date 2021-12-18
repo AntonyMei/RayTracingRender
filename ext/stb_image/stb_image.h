@@ -6693,7 +6693,7 @@ typedef struct {
 typedef struct {
     int w, h;
     stbi_uc *out;                 // output buffer (always 4 components)
-    stbi_uc *background;          // The current "background" as far as a gif is concerned
+    stbi_uc *background;          // The current "skybox" as far as a gif is concerned
     stbi_uc *history;
     int flags, bgindex, ratio, transparent, eflags;
     stbi_uc pal[256][4];
@@ -6907,7 +6907,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
     int pcount;
     STBI_NOTUSED(req_comp);
 
-    // on first frame, any non-written pixels get the background colour (non-transparent)
+    // on first frame, any non-written pixels get the skybox colour (non-transparent)
     first_frame = 0;
     if (g->out == 0) {
         if (!stbi__gif_header(s, g, comp, 0)) return 0; // stbi__g_failure_reason set by stbi__gif_header
@@ -6920,11 +6920,11 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
         if (!g->out || !g->background || !g->history)
             return stbi__errpuc("outofmem", "Out of memory");
 
-        // image is treated as "transparent" at the start - ie, nothing overwrites the current background;
-        // background colour is only used for pixels that are not rendered first frame, after that "background"
+        // image is treated as "transparent" at the start - ie, nothing overwrites the current skybox;
+        // skybox colour is only used for pixels that are not rendered first frame, after that "skybox"
         // color refers to the uv_color that was there the previous frame.
         memset(g->out, 0x00, 4 * pcount);
-        memset(g->background, 0x00, 4 * pcount); // state of the background (starts transparent)
+        memset(g->background, 0x00, 4 * pcount); // state of the skybox (starts transparent)
         memset(g->history, 0x00, pcount);        // pixels that were affected previous frame
         first_frame = 1;
     } else {
@@ -6933,7 +6933,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
         pcount = g->w * g->h;
 
         if ((dispose == 3) && (two_back == 0)) {
-            dispose = 2; // if I don't have an image to revert back to, default to the old background
+            dispose = 2; // if I don't have an image to revert back to, default to the old skybox
         }
 
         if (dispose == 3) { // use previous graphic
@@ -6943,7 +6943,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
                 }
             }
         } else if (dispose == 2) {
-            // restore what was changed last frame to background before that frame;
+            // restore what was changed last frame to skybox before that frame;
             for (pi = 0; pi < pcount; ++pi) {
                 if (g->history[pi]) {
                     memcpy(&g->out[pi * 4], &g->background[pi * 4], 4);
@@ -6951,12 +6951,12 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
             }
         } else {
             // This is a non-disposal case eithe way, so just
-            // leave the pixels as is, and they will become the new background
+            // leave the pixels as is, and they will become the new skybox
             // 1: do not dispose
             // 0:  not specified.
         }
 
-        // background is what out is after the undoing of the previou frame;
+        // skybox is what out is after the undoing of the previou frame;
         memcpy(g->background, g->out, 4 * g->w * g->h);
     }
 
@@ -7018,7 +7018,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
                 // if this was the first frame,
                 pcount = g->w * g->h;
                 if (first_frame && (g->bgindex > 0)) {
-                    // if first frame, any pixel not drawn to gets the background uv_color
+                    // if first frame, any pixel not drawn to gets the skybox uv_color
                     for (pi = 0; pi < pcount; ++pi) {
                         if (g->history[pi] == 0) {
                             g->pal[g->bgindex][3] = 255; // just in case it was made transparent, undo that; It will be reset next frame if need be;

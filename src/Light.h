@@ -6,7 +6,6 @@
 #define PROJECT_LIGHT_H
 
 class Light : public Material {
-    virtual Color emit(double u, double v, const Point &p) const = 0;
 };
 
 class DiffuseLight : public Light {

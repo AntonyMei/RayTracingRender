@@ -40,9 +40,10 @@
 #include "src/Texture.h"
 #include "src/Material.h"
 #include "src/Light.h"
-#include "src/Background.h"
+#include "src/Skybox.h"
 #include "src/Integrator.h"
 
+// scenes w/o lights (only background light)
 HittableList motion_blur_scene() {
     HittableList world;
 
@@ -210,6 +211,8 @@ SimpleCamera earth_camera(double aspect_ratio) {
             aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
+// scenes with light
+
 void render_scene(int current_id, int max_processes, const char *output_file) {
     // Image settings
 #if defined(WINDOWS)
@@ -234,12 +237,18 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     }
 
     // World & camera
-    // Note that motion blur objects should be created with 0.0 - 1.0
-    // Control motion blur with camera's shutter
+    // Note that motion blur objects should be created with 0.0 - 1.0.
+    // Control motion blur with camera's shutter.
     HittableList world = earth_scene();
     SimpleCamera cam = earth_camera(aspect_ratio);
-    SimpleSkybox skybox = SimpleSkybox();
+
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
+
+    // Skybox
+    // use "SimpleSkybox skybox;" for scenes with no lights
+    // SimpleSkybox skybox;
+    ConstantSkybox skybox({0, 0, 0});
+
 
     // multiprocessing related (id = 0 - max_processes - 1)
     int work_load = image_height / max_processes;
