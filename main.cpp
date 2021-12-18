@@ -31,6 +31,7 @@
 #include "src/AABB.h"
 #include "src/Hittable.h"
 #include "src/Accelerator.h"
+#include "src/Texture.h"
 #include "src/Material.h"
 #include "src/Integrator.h"
 
