@@ -89,5 +89,6 @@
 #include "src/scenes/Earth.h"
 #include "src/scenes/SimpleLight.h"
 #include "src/scenes/CornellBoxEmpty.h"
+#include "src/scenes/CornellBoxTwoBlocks.h"
 
 #endif //PROJECT_HEADERS_H
