@@ -183,8 +183,10 @@ HittableList earth_scene() {
 #endif
     auto earth_texture = make_shared<ImageTexture>(filename);
     auto earth_surface = make_shared<Lambertian>(earth_texture);
-    auto globe = make_shared<Sphere>(Point(0, 0, 0), 2, earth_surface);
-    world.add(globe);
+    auto globe1 = make_shared<Sphere>(Point(0, 0, 0), 2, earth_surface);
+    auto globe2 = make_shared<Sphere>(Point(-100, -100, -100), 2, earth_surface);
+    world.add(globe1);
+    world.add(globe2); // bvh will crash if only one object
     return world;
 }
 
