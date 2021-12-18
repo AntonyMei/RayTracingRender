@@ -58,6 +58,10 @@ public:
                 random_double(time0, time1)};
     }
 
+    double shutter_open() const { return time0; }
+
+    double shutter_close() const { return time1; }
+
 private:
     // three directions of camera
     Vector3d u, v, w;

@@ -151,12 +151,12 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
         image.push_back(std::move(row));
     }
 
-    // World
+    // World & camera
+    // Note that motion blur objects should be created with 0.0 - 1.0
+    // Control motion blur with camera's shutter
     HittableList world = motion_blur_scene();
-    BVHNode world_bvh(world, 0.0, 1.0);
-
-    // Camera
     SimpleCamera cam = motion_blur_camera(aspect_ratio);
+    BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
     // multiprocessing related (id = 0 - max_processes - 1)
     int work_load = image_height / max_processes;
