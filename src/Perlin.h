@@ -1,6 +1,6 @@
 //
 // Created by meiyixuan on 2021-12-18.
-// Uses code from Peter Shirley
+// Perlin noise generator uses code from Peter Shirley
 //
 
 #ifndef PROJECT_PERLIN_H
@@ -35,7 +35,6 @@ public:
         u = u * u * (3 - 2 * u);
         v = v * v * (3 - 2 * v);
         w = w * w * (3 - 2 * w);
-
 
         auto i = static_cast<int>(floor(p.x()));
         auto j = static_cast<int>(floor(p.y()));
