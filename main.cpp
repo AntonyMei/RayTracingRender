@@ -144,7 +144,7 @@ SimpleCamera two_spheres_camera(double aspect_ratio) {
             aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
-HittableList two_perlin_spheres_scene() {
+HittableList two_marble_spheres_scene() {
     HittableList objects;
 
     auto perlin_texture = make_shared<MarbleTexture>(4);
@@ -156,7 +156,39 @@ HittableList two_perlin_spheres_scene() {
     return objects;
 }
 
-SimpleCamera two_perlin_spheres_camera(double aspect_ratio) {
+SimpleCamera two_marble_spheres_camera(double aspect_ratio) {
+    // basic settings
+    Point camera_position(13, 2, 3);
+    Point view_point(0, 0, 0);
+    Vector3d camera_up(0, 1, 0);
+    // fov
+    auto vertical_fov = 20.0;
+    // off focus blur
+    auto dist_to_focus = 10.0;
+    auto aperture = 0.0;
+    // motion blur (0.0 - 1.0)
+    auto shutter_open = 0.0;
+    auto shutter_close = 1.0;
+
+    return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+            aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+HittableList earth_scene() {
+    HittableList world;
+#if defined(WINDOWS)
+    auto filename = "earthmap.jpg";
+#else
+    auto filename = "./resources/earthmap.jpg";
+#endif
+    auto earth_texture = make_shared<ImageTexture>(filename);
+    auto earth_surface = make_shared<Lambertian>(earth_texture);
+    auto globe = make_shared<Sphere>(Point(0, 0, 0), 2, earth_surface);
+    world.add(globe);
+    return world;
+}
+
+SimpleCamera earth_camera(double aspect_ratio) {
     // basic settings
     Point camera_position(13, 2, 3);
     Point view_point(0, 0, 0);
@@ -200,8 +232,8 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     // World & camera
     // Note that motion blur objects should be created with 0.0 - 1.0
     // Control motion blur with camera's shutter
-    HittableList world = two_perlin_spheres_scene();
-    SimpleCamera cam = two_perlin_spheres_camera(aspect_ratio);
+    HittableList world = earth_scene();
+    SimpleCamera cam = earth_camera(aspect_ratio);
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
     // multiprocessing related (id = 0 - max_processes - 1)
