@@ -139,12 +139,22 @@ SimpleCamera two_spheres_camera(double aspect_ratio) {
 }
 
 void render_scene(int current_id, int max_processes, const char *output_file) {
-    // Image
+    // Image settings
+#if defined(WINDOWS)
     const auto aspect_ratio = 16.0 / 9.0;
-    const int image_width = 3840; // 3840, 800
+    const int image_width = 400; // 3840, 800
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 1000; // 1000, 100
-    const int max_depth = 100; // 100, 50
+    const int samples_per_pixel = 100; // 1000, 100
+    const int max_depth = 25; // 100, 50
+#else
+    const auto aspect_ratio = 16.0 / 9.0;
+    const int image_width = 3840;
+    const int image_height = static_cast<int>(image_width / aspect_ratio);
+    const int samples_per_pixel = 1000;
+    const int max_depth = 100;
+#endif
+
+    // image
     auto image = std::vector<std::vector<Pixel>>();
     for (int idx = 0; idx < image_height; ++idx) {
         auto row = std::vector<Pixel>(image_width);
@@ -154,8 +164,8 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     // World & camera
     // Note that motion blur objects should be created with 0.0 - 1.0
     // Control motion blur with camera's shutter
-    HittableList world = motion_blur_scene();
-    SimpleCamera cam = motion_blur_camera(aspect_ratio);
+    HittableList world = two_spheres_scene();
+    SimpleCamera cam = two_spheres_camera(aspect_ratio);
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
     // multiprocessing related (id = 0 - max_processes - 1)
