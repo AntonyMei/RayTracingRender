@@ -44,7 +44,9 @@ inline double random_double() {
 
 inline double random_double_fixed() {
     // random number in [0, 1), with fixed initial seed
-    return rand() / (RAND_MAX + 1.0);
+    // This function is thread-identical, and should be used in
+    // perlin noise and random scene generation.
+     return rand() / (RAND_MAX + 1.0);
 }
 
 inline double random_double(double min, double max) {
