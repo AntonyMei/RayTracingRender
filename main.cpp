@@ -100,7 +100,7 @@ SimpleCamera motion_blur_camera(double aspect_ratio) {
     auto aperture = 0.1;
     // motion blur (0.0 - 1.0)
     auto shutter_open = 0.0;
-    auto shutter_close = 0.2;
+    auto shutter_close = 0.5;
 
     return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
             aperture, dist_to_focus, shutter_open, shutter_close};
