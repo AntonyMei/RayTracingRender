@@ -37,7 +37,7 @@ public:
     }
 
     Ray get_ray(double s, double t) const override {
-        // calculate offset focus offset
+        // calculate _displacement focus _displacement
         Vector3d rd = lens_radius * random_in_unit_disk();
         Vector3d offset = u * rd.x() + v * rd.y();
 

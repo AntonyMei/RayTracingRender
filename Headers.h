@@ -52,6 +52,7 @@
 #include "src/core/Light.h"
 #include "src/core/Skybox.h"
 #include "src/core/Integrator.h"
+#include "src/core/Transform.h"
 
 // derived classes
 // camera
@@ -74,6 +75,9 @@
 #include "src/hittable/MovingSphere.h"
 #include "src/hittable/Rectangle.h"
 #include "src/hittable/Box.h"
+// transform
+#include "src/transform/Translate.h"
+#include "src/transform/RotateY.h"
 // light
 #include "src/light/DiffuseLight.h"
 // skybox
