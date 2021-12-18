@@ -9,19 +9,22 @@ class Integrator {
 public:
     Integrator() = delete;
 
-    explicit Integrator(const Accelerator &scene) : world(scene) {}
+    explicit Integrator(const Accelerator &scene, const Background &_background)
+            : world(scene), background(_background) {}
 
     virtual Color cast_ray(const Ray &r, int remaining_bounce) const = 0;
 
 protected:
     const Accelerator &world;
+    const Background &background;
 };
 
 class PathTracingIntegrator : Integrator {
 public:
     PathTracingIntegrator() = delete;
 
-    explicit PathTracingIntegrator(const Accelerator &scene) : Integrator(scene) {}
+    explicit PathTracingIntegrator(const Accelerator &scene, const Background &background)
+            : Integrator(scene, background) {}
 
     Color cast_ray(const Ray &r, int remaining_bounce) const override {
         Hit hit;
@@ -45,9 +48,8 @@ public:
             return {0, 0, 0};
         }
 
-        Vector3d unit_direction = normalize(r.direction());
-        auto t = 0.5 * (unit_direction.y() + 1.0);
-        return (1.0 - t) * Color(1.0, 1.0, 1.0) + t * Color(0.5, 0.7, 1.0);
+        // if we hit nothing
+        return background.get_color(r);
     }
 };
 

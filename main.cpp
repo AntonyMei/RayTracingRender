@@ -39,6 +39,8 @@
 #include "src/Accelerator.h"
 #include "src/Texture.h"
 #include "src/Material.h"
+#include "src/Light.h"
+#include "src/Background.h"
 #include "src/Integrator.h"
 
 HittableList motion_blur_scene() {
@@ -236,6 +238,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     // Control motion blur with camera's shutter
     HittableList world = earth_scene();
     SimpleCamera cam = earth_camera(aspect_ratio);
+    SimpleSkybox skybox = SimpleSkybox();
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
     // multiprocessing related (id = 0 - max_processes - 1)
@@ -244,7 +247,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
 
     // Render
-    PathTracingIntegrator integrator(world_bvh);
+    PathTracingIntegrator integrator(world_bvh, skybox);
     for (int j = start_row; j > end_row; --j) {
         std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
         auto start = time(nullptr);
