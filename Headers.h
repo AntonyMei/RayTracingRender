@@ -53,6 +53,7 @@
 #include "src/core/Skybox.h"
 #include "src/core/Integrator.h"
 #include "src/core/Transform.h"
+#include "src/core/ParticipatingMedium.h"
 
 // derived classes
 // camera
@@ -67,6 +68,7 @@
 #include "src/material/Lambertian.h"
 #include "src/material/Metal.h"
 #include "src/material/Dielectric.h"
+#include "src/material/Isotropic.h"
 // accelerator
 #include "src/accelerator/HittableList.h"
 #include "src/accelerator/BVH.h"
@@ -85,6 +87,8 @@
 #include "src/skybox/ConstantSkybox.h"
 // integrator
 #include "src/integrator/PathTracingIntegrator.h"
+// medium
+#include "src/medium/ConstantMedium.h"
 // scenes
 #include "src/scenes/MotionBlur.h"
 #include "src/scenes/MotionBlurChecker.h"
@@ -95,5 +99,6 @@
 #include "src/scenes/CornellBoxEmpty.h"
 #include "src/scenes/CornellBoxTwoBlocks.h"
 #include "src/scenes/CornellBox.h"
+#include "src/scenes/CornellBoxParticipatingMedia.h"
 
 #endif //PROJECT_HEADERS_H
