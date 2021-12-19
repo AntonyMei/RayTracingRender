@@ -65,7 +65,7 @@ HittableList book_2_final_scene() {
     objects.add(make_shared<Sphere>(Point(400, 200, 400), 100, earth_mat));
 
     // marble ball
-    auto marble_texture = make_shared<MarbleTexture>(4);
+    auto marble_texture = make_shared<MarbleTexture>(0.2);
     objects.add(make_shared<Sphere>(Point(220, 280, 300), 80,
                                     make_shared<Lambertian>(marble_texture)));
 
