@@ -14,18 +14,18 @@ public:
     bool scatter(const Ray &ray_in, const Hit &hit, Color &alb,
                  std::vector<Ray> &scattered_rays, double &pdf) const override {
         // get scatter direction
-        auto scatter_direction = hit.normal + random_unit_vector();
-        if (scatter_direction.near_zero())
-            scatter_direction = hit.normal;
+        OrthonormalBasis onb;
+        onb.build_from_w(hit.normal);
+        auto direction = onb.local(random_cosine_direction());
 
         // generate scattered rays
-        scattered_rays.emplace_back(hit.hit_point, normalize(scatter_direction), ray_in.time());
+        scattered_rays.emplace_back(hit.hit_point, normalize(direction), ray_in.time());
         alb = albedo->uv_color(hit.u, hit.v, hit.hit_point);
-        pdf = dot(hit.normal, normalize(scatter_direction)) / pi;
+        pdf = dot(onb.w(), normalize(direction)) / pi;
         return true;
     }
 
-    double scattering_pdf(const Ray &ray_in, const Hit &hit, const Ray& scattered)
+    double scattering_pdf(const Ray &ray_in, const Hit &hit, const Ray &scattered)
     const override {
         auto cosine = dot(hit.normal, normalize(scattered.direction()));
         return cosine < 0 ? 0 : cosine / pi;

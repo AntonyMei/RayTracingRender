@@ -38,6 +38,7 @@
 #include "src/math/Utils.h"
 #include "src/math/Vector3d.h"
 #include "src/math/Perlin.h"
+#include "src/math/OrthonormalBasis.h"
 
 // base classes
 #include "src/core/Ray.h"

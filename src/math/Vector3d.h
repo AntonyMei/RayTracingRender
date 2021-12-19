@@ -177,6 +177,18 @@ Vector3d random_in_hemisphere(const Vector3d &normal) {
         return -in_unit_sphere;
 }
 
+inline Vector3d random_cosine_direction() {
+    auto r1 = random_double();
+    auto r2 = random_double();
+    auto z = sqrt(1 - r2);
+
+    auto phi = 2 * pi * r1;
+    auto x = cos(phi) * sqrt(r2);
+    auto y = sin(phi) * sqrt(r2);
+
+    return {x, y, z};
+}
+
 Vector3d reflect(const Vector3d &v, const Vector3d &n) {
     return v - 2 * dot(v, n) * n;
 }
