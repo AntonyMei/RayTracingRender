@@ -44,14 +44,16 @@ HittableList book_2_final_scene() {
                                     make_shared<Metal>(Color(0.8, 0.8, 0.9), 1.0)
     ));
 
-    // participating media
+    // participating media ball
     auto boundary = make_shared<Sphere>(Point(360, 150, 145), 70,
                                         make_shared<Dielectric>(1.5));
     objects.add(boundary);
     objects.add(make_shared<ConstantMedium>(boundary, 0.2, Color(0.2, 0.4, 0.9)));
+
+    // participating media for whole space
     boundary = make_shared<Sphere>(Point(0, 0, 0), 5000,
                                    make_shared<Dielectric>(1.5));
-    objects.add(make_shared<ConstantMedium>(boundary, 0.01, Color(1, 1, 1)));
+    objects.add(make_shared<ConstantMedium>(boundary, .0001, Color(1, 1, 1)));
 
     // earth ball
 #if defined(WINDOWS)
