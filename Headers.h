@@ -100,7 +100,6 @@
 #include "src/scenes/CornellBoxTwoBlocks.h"
 #include "src/scenes/CornellBox.h"
 #include "src/scenes/CornellBoxParticipatingMedia.h"
-#include "src/scenes/CornellBoxMarble.h"
 #include "src/scenes/Book2Final.h"
 
 #endif //PROJECT_HEADERS_H
