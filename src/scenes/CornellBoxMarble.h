@@ -15,7 +15,7 @@ HittableList cornell_box_marble_scene() {
     auto red = make_shared<Lambertian>(Color(.65, .05, .05));
     auto white = make_shared<Lambertian>(Color(.73, .73, .73));
     auto green = make_shared<Lambertian>(Color(.12, .45, .15));
-    auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 7);
+    auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 15);
 
     // cornell box
     objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
