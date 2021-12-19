@@ -11,17 +11,24 @@ public:
 
     explicit Lambertian(std::shared_ptr<Texture> a) : albedo(std::move(a)) {}
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
-                 std::vector<Ray> &scattered_rays) const override {
+    bool scatter(const Ray &ray_in, const Hit &hit, Color &alb,
+                 std::vector<Ray> &scattered_rays, double &pdf) const override {
         // get scatter direction
         auto scatter_direction = hit.normal + random_unit_vector();
         if (scatter_direction.near_zero())
             scatter_direction = hit.normal;
 
         // generate scattered rays
-        scattered_rays.emplace_back(hit.hit_point, scatter_direction, ray_in.time());
-        attenuation = albedo->uv_color(hit.u, hit.v, hit.hit_point);
+        scattered_rays.emplace_back(hit.hit_point, normalize(scatter_direction), ray_in.time());
+        alb = albedo->uv_color(hit.u, hit.v, hit.hit_point);
+        pdf = dot(hit.normal, normalize(scatter_direction)) / pi;
         return true;
+    }
+
+    double scattering_pdf(const Ray &ray_in, const Hit &hit, const Ray& scattered)
+    const override {
+        auto cosine = dot(hit.normal, normalize(scattered.direction()));
+        return cosine < 0 ? 0 : cosine / pi;
     }
 
 private:

@@ -14,7 +14,7 @@ public:
     explicit Isotropic(std::shared_ptr<Texture> texture) : albedo(std::move(texture)) {}
 
     bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
-                 std::vector<Ray> &scattered_rays) const override {
+                 std::vector<Ray> &scattered_rays) const {
         scattered_rays.emplace_back(hit.hit_point, random_in_unit_sphere(), ray_in.time());
         attenuation = albedo->uv_color(hit.u, hit.v, hit.hit_point);
         return true;

@@ -15,7 +15,7 @@ public:
             intensity(_intensity) {}
 
     bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
-                 std::vector<Ray> &scattered_rays) const override {
+                 std::vector<Ray> &scattered_rays) const {
         // lights don't scatter
         return false;
     }

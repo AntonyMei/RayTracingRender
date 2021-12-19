@@ -12,7 +12,7 @@ public:
     Color get_albedo() { return albedo; }
 
     bool scatter(const Ray &r_in, const Hit &hit, Color &attenuation,
-                 std::vector<Ray> &scattered_rays) const override {
+                 std::vector<Ray> &scattered_rays) const {
         // get reflected direction (include perturbation for imperfect reflection)
         Vector3d reflected_dir = reflect(normalize(r_in.direction()), hit.normal);
         reflected_dir += fuzz * random_in_unit_sphere();

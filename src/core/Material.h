@@ -9,13 +9,12 @@ class Hit;
 
 class Material {
 public:
-    virtual bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
+    virtual bool scatter(const Ray &ray_in, const Hit &hit, Color &albedo,
                          std::vector<Ray> &scattered_rays, double& pdf) const {
         return false;
     }
 
-    virtual double scattering_pdf(const Ray &ray_in, const Hit &hit,
-                                  std::vector<Ray> &scattered_rays) const {
+    virtual double scattering_pdf(const Ray &ray_in, const Hit &hit, const Ray& scattered) const {
         return 0;
     }
 

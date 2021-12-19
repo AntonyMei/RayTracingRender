@@ -10,7 +10,7 @@ public:
     explicit Dielectric(double index_of_refraction) : ir(index_of_refraction) {}
 
     bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
-                 std::vector<Ray> &scattered_rays) const override {
+                 std::vector<Ray> &scattered_rays) const {
         // calculate parameters
         attenuation = Color(1.0, 1.0, 1.0);
         double refraction_ratio = hit.front_face ? (1.0 / ir) : ir;

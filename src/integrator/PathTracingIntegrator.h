@@ -25,18 +25,21 @@ public:
         std::vector<Ray> scattered_list;
         Color attenuation;
         Color emit_color = hit.mat_ptr->emit(hit.u, hit.v, hit.hit_point);
+        double pdf;
+        Color albedo;
 
         // no scattering
-        if (!hit.mat_ptr->scatter(r, hit, attenuation, scattered_list))
+        if (!hit.mat_ptr->scatter(r, hit, albedo, scattered_list, pdf))
             return emit_color;
 
         // scattering
         Color scatter_color;
         for (const auto &scattered: scattered_list) {
-            scatter_color += cast_ray(scattered, remaining_bounce - 1);
+            scatter_color += cast_ray(scattered, remaining_bounce - 1) *
+                             hit.mat_ptr->scattering_pdf(r, hit, scattered);
         }
         scatter_color /= static_cast<double>(scattered_list.size());
-        return emit_color + attenuation * scatter_color;
+        return emit_color + albedo * scatter_color / pdf;
     }
 };
 
