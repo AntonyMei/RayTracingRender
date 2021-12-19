@@ -22,7 +22,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     const int image_width = 3840;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 10000;
-    const int max_depth = 200;
+    const int max_depth = 50;
 #endif
 
     // image
