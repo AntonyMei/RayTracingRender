@@ -49,6 +49,8 @@ public:
     }
 
 private:
+    // input d = 0.01 thick smoke, d = 0.0001 thin smoke
+    // thickness increase with d
     std::shared_ptr<Hittable> boundary;
     std::shared_ptr<Material> phase_function;
     double neg_inv_density;

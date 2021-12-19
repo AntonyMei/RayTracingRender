@@ -15,8 +15,8 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     const auto aspect_ratio = 1.0; // 16.0 / 9.0 or 1.0
     const int image_width = 400; // 3840, 800
     const int image_height = static_cast<int>(image_width / aspect_ratio);
-    const int samples_per_pixel = 1000; // 1000, 100 (x4 if no global light)
-    const int max_depth = 50; // 100, 50
+    const int samples_per_pixel = 400; // 1000, 100 (x4 if no global light)
+    const int max_depth = 25; // 100, 50
 #else
     const auto aspect_ratio = 1.0; // 16.0 / 9.0 or 1.0
     const int image_width = 3840;
