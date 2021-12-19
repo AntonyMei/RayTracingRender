@@ -54,7 +54,12 @@ HittableList book_2_final_scene() {
     objects.add(make_shared<ConstantMedium>(boundary, 0.01, Color(1, 1, 1)));
 
     // earth ball
-    auto earth_mat = make_shared<Lambertian>(make_shared<ImageTexture>("earthmap.jpg"));
+#if defined(WINDOWS)
+    auto filename = "earthmap.jpg";
+#else
+    auto filename = "./resources/earthmap.jpg";
+#endif
+    auto earth_mat = make_shared<Lambertian>(make_shared<ImageTexture>(filename));
     objects.add(make_shared<Sphere>(Point(400, 200, 400), 100, earth_mat));
 
     // marble ball
