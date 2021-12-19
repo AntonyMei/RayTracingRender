@@ -7,7 +7,7 @@ IF(WIN32)
     add_definitions(-D WINDOWS)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
 ELSE()
-    add_definitions(-D DEBUG)
+#    add_definitions(-D DEBUG)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O2 -pthread -fopenmp")
 ENDIF()
 

@@ -13,7 +13,7 @@ public:
 
     Color uv_color(double u, double v, const Point &p) const override {
         // This will render a marble texture.
-        return Color(1, 1, 1) * 0.5 * (1 + sin(scale * p.z() + 10 * noise.turbulence(p)));
+        return Color(1, 1, 1) * 0.5 * (1 + sin(scale * p.z() + 10 * noise.turbulence(scale * p / 4)));
     }
 
 private:
