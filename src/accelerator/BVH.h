@@ -17,6 +17,14 @@ public:
         // surface-area-heuristic BVH build
         // start inclusive, end exclusive
 
+        // special case
+        if (src_objects.size() == 1) {
+            left = src_objects[0];
+            right = nullptr;
+            src_objects[0]->bounding_box(time0, time1, box);
+            return;
+        }
+
         // initialize
         size_t n = end - start;
         std::vector<AABB> boxes = std::vector<AABB>(n);
@@ -95,8 +103,9 @@ public:
             return false;
 
         // recursively check two child nodes
-        bool hit_left = left->hit(ray, t_min, t_max, hit);
-        bool hit_right = right->hit(ray, t_min, hit_left ? hit.t : t_max, hit);
+        bool hit_left = false, hit_right = false;
+        if (left) hit_left = left->hit(ray, t_min, t_max, hit);
+        if (right) hit_right = right->hit(ray, t_min, hit_left ? hit.t : t_max, hit);
         return hit_left || hit_right;
     }
 
