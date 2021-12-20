@@ -13,12 +13,19 @@ HittableList test_scene() {
     auto green = make_shared<Lambertian>(Color(.12, .45, .15));
     auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 15);
 
+    // wall
     objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
     objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 0, red));
     objects.add(make_shared<XZRectangle>(213, 343, 227, 332, 554, light));
     objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 0, white));
     objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 555, white));
     objects.add(make_shared<XYRectangle>(0, 555, 0, 555, 555, white));
+
+    // triangle
+    Vertex v0(0.0, 0.0, {200, 200, 200});
+    Vertex v1(0.0, 0.0, {200, 400, 200});
+    Vertex v2(0.0, 0.0, {400, 400, 200});
+    objects.add(std::make_shared<Triangle>(v0, v1, v2, green));
 
     return objects;
 }

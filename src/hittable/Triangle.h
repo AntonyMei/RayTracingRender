@@ -56,11 +56,28 @@ public:
         get_triangle_uv(hit.hit_point, hit.u, hit.v);
     }
 
+    bool bounding_box(double time0, double time1, AABB &output_box) const override {
+        // x
+        double x_min = min3(vertices[0]->point.x(), vertices[1]->point.x(), vertices[2]->point.x());
+        double x_max = max3(vertices[0]->point.x(), vertices[1]->point.x(), vertices[2]->point.x());
+
+        // y
+        double y_min = min3(vertices[0]->point.y(), vertices[1]->point.y(), vertices[2]->point.y());
+        double y_max = max3(vertices[0]->point.y(), vertices[1]->point.y(), vertices[2]->point.y());
+
+        // z
+        double z_min = min3(vertices[0]->point.z(), vertices[1]->point.z(), vertices[2]->point.z());
+        double z_max = max3(vertices[0]->point.z(), vertices[1]->point.z(), vertices[2]->point.z());
+
+        output_box = AABB({x_min, y_min, z_min}, {x_max, y_max, z_max});
+        return true;
+    }
+
 private:
     Vector3d normal;
     std::shared_ptr<Vertex> vertices[3];
 
-    void barycentric(const Point &p, double &u, double &v, double &w) const {
+    inline void barycentric(const Point &p, double &u, double &v, double &w) const {
         // Compute barycentric coordinates (u, v, w) for
         // point p with respect to triangle (0, 1, 2)
         // From Christer Ericson's Real-Time Collision Detection
@@ -78,11 +95,19 @@ private:
         u = 1.0 - v - w;
     }
 
-    void get_triangle_uv(const Point &p, double &u, double &v) const {
+    inline void get_triangle_uv(const Point &p, double &u, double &v) const {
         double a, b, c;
         barycentric(p, a, b, c);
         u = a * vertices[0]->u + b * vertices[1]->u + c * vertices[2]->u;
         v = a * vertices[0]->v + b * vertices[1]->v + c * vertices[2]->v;
+    }
+
+    static inline double min3(const double &a, const double &b, const double &c) {
+        return fmin(fmin(a, b), c);
+    }
+
+    static inline double max3(const double &a, const double &b, const double &c) {
+        return fmax(fmax(a, b), c);
     }
 
 };
