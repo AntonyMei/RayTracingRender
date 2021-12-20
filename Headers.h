@@ -77,6 +77,7 @@
 #include "src/hittable/MovingSphere.h"
 #include "src/hittable/Rectangle.h"
 #include "src/hittable/Box.h"
+#include "src/hittable/Triangle.h"
 // transform
 #include "src/transform/Translate.h"
 #include "src/transform/RotateY.h"

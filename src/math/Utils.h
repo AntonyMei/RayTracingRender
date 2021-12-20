@@ -13,6 +13,7 @@ using std::make_shared;
 using std::sqrt;
 const double inf = std::numeric_limits<double>::infinity();
 const double TMIN = 0.001;
+const double EPSILON = 0.0000001;
 const double pi = 3.1415926535897932385;
 
 inline double deg2rad(double deg) {
