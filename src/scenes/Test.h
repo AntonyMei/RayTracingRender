@@ -10,7 +10,7 @@ HittableList test_scene() {
 
 //    auto red = make_shared<Lambertian>(Color(.65, .05, .05));
 //    auto white = make_shared<Lambertian>(Color(.73, .73, .73));
-//    auto green = make_shared<Lambertian>(Color(.12, .45, .15));
+    auto green = make_shared<Lambertian>(Color(.12, .45, .15));
 //    auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 15);
 //#if defined(WINDOWS)
 //    auto filename = "earthmap.jpg";
@@ -21,7 +21,7 @@ HittableList test_scene() {
 //    auto earth_surface = make_shared<Lambertian>(earth_texture);
 //
 //    // wall
-//    objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
+    objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
 //    objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 0, red));
 //    objects.add(make_shared<XZRectangle>(213, 343, 227, 332, 554, light));
 //    objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 0, white));
@@ -49,13 +49,13 @@ HittableList test_scene() {
 
 SimpleCamera test_camera(double aspect_ratio) {
     // basic settings
-    Point camera_position(278, 278, -800);
-    Point view_point(278, 278, 0);
+    Point camera_position(0, 1, 0);
+    Point view_point(-1.2, 1, 0);
     Vector3d camera_up(0, 1, 0);
     // fov
     auto vertical_fov = 40.0;
     // off focus blur
-    auto dist_to_focus = 10.0;
+    auto dist_to_focus = 1.0;
     auto aperture = 0.0;
     // motion blur (0.0 - 1.0)
     auto shutter_open = 0.0;
