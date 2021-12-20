@@ -61,14 +61,26 @@ public:
         // x
         double x_min = min3(vertices[0]->point.x(), vertices[1]->point.x(), vertices[2]->point.x());
         double x_max = max3(vertices[0]->point.x(), vertices[1]->point.x(), vertices[2]->point.x());
+        if (x_min == x_max) {
+            x_min -= 0.0001;
+            x_max += 0.0001;
+        }
 
         // y
         double y_min = min3(vertices[0]->point.y(), vertices[1]->point.y(), vertices[2]->point.y());
         double y_max = max3(vertices[0]->point.y(), vertices[1]->point.y(), vertices[2]->point.y());
+        if (y_min == y_max) {
+            y_min -= 0.0001;
+            y_max += 0.0001;
+        }
 
         // z
         double z_min = min3(vertices[0]->point.z(), vertices[1]->point.z(), vertices[2]->point.z());
         double z_max = max3(vertices[0]->point.z(), vertices[1]->point.z(), vertices[2]->point.z());
+        if (z_min == z_max) {
+            z_min -= 0.0001;
+            z_max += 0.0001;
+        }
 
         output_box = AABB({x_min, y_min, z_min}, {x_max, y_max, z_max});
         return true;
