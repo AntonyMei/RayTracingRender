@@ -33,6 +33,7 @@
 
 // external libraries
 #include "ext/stb_image/stb_image_header.h"
+#include "ext/tinyobjloader/tiny_obj_loader_header.h"
 
 // basic math utilities
 #include "src/math/Utils.h"

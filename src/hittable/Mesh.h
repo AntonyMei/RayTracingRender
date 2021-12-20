@@ -29,10 +29,7 @@ public:
 
 private:
     std::shared_ptr<BVHNode> mesh;
+
 };
-
-std::shared_ptr<Mesh> build_mesh(const std::string& filename) {
-
-}
 
 #endif //PROJECT_MESH_H
