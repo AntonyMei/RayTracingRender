@@ -35,7 +35,14 @@ HittableList test_scene() {
 //    objects.add(std::make_shared<Triangle>(v0, v1, v2, earth_surface));
 
     // mesh
-    objects.add(ObjectParser("CornellBox-Original.obj", "./").parse());
+#if defined(WINDOWS)
+    auto obj_name = "CornellBox-Original.obj";
+    auto mtl_path = "./";
+#else
+    auto obj_name = "./resources/CornellBox-Original.obj";
+    auto mtl_path = "./resources";
+#endif
+    objects.add(ObjectParser(obj_name, mtl_path).parse());
 
     return objects;
 }
