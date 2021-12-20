@@ -82,7 +82,7 @@ public:
                     }
 
                     // emplace vertex
-                    vertex_list.emplace_back(u, v, point, normal);
+                    vertex_list.emplace_back(std::make_shared<Vertex>(u, v, point, normal));
                 }
                 index_offset += fv;
 
