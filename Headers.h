@@ -78,6 +78,7 @@
 #include "src/hittable/Rectangle.h"
 #include "src/hittable/Box.h"
 #include "src/hittable/Triangle.h"
+#include "src/hittable/Mesh.h"
 // transform
 #include "src/transform/Translate.h"
 #include "src/transform/RotateY.h"
