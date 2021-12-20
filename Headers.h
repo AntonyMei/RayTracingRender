@@ -92,6 +92,8 @@
 #include "src/integrator/PathTracingIntegrator.h"
 // medium
 #include "src/medium/ConstantMedium.h"
+// object parser
+#include "src/core/ObjectParser.h"
 // scenes
 #include "src/scenes/MotionBlur.h"
 #include "src/scenes/MotionBlurChecker.h"
