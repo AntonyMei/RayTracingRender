@@ -101,5 +101,6 @@
 #include "src/scenes/CornellBox.h"
 #include "src/scenes/CornellBoxParticipatingMedia.h"
 #include "src/scenes/Book2Final.h"
+#include "src/scenes/Test.h"
 
 #endif //PROJECT_HEADERS_H
