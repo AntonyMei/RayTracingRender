@@ -54,6 +54,7 @@ public:
         hit.set_face_normal(ray, normal);
         hit.mat_ptr = mat_ptr;
         get_triangle_uv(hit.hit_point, hit.u, hit.v);
+        return true;
     }
 
     bool bounding_box(double time0, double time1, AABB &output_box) const override {

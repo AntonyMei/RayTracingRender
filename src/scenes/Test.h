@@ -22,9 +22,9 @@ HittableList test_scene() {
     objects.add(make_shared<XYRectangle>(0, 555, 0, 555, 555, white));
 
     // triangle
-    Vertex v0(0.0, 0.0, {200, 200, 200});
-    Vertex v1(0.0, 0.0, {200, 400, 200});
-    Vertex v2(0.0, 0.0, {400, 400, 200});
+    auto v0 = make_shared<Vertex>(0.0, 0.0, Point(200, 200, 200));
+    auto v1 = make_shared<Vertex>(0.0, 0.0, Point(200, 400, 200));
+    auto v2 = make_shared<Vertex>(0.0, 0.0, Point(400, 200, 200));
     objects.add(std::make_shared<Triangle>(v0, v1, v2, green));
 
     return objects;
