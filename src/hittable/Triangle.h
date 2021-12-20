@@ -50,7 +50,7 @@ public:
         if (t < t_min || t > t_max) return false;
         hit.t = t;
         hit.hit_point = ray.at(t);
-        hit.normal = normal;
+        hit.normal = normal; // can also clip
         hit.set_face_normal(ray, normal);
         hit.mat_ptr = mat_ptr;
         get_triangle_uv(hit.hit_point, hit.u, hit.v);
