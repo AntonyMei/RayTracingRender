@@ -49,7 +49,7 @@ HittableList test_scene() {
 
 SimpleCamera test_camera(double aspect_ratio) {
     // basic settings
-    Point camera_position(-1.2, 1, 0);
+    Point camera_position(0, 1, 5);
     Point view_point(0, 1, 0);
     Vector3d camera_up(0, 1, 0);
     // fov
