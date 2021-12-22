@@ -70,6 +70,7 @@
 #include "src/material/Metal.h"
 #include "src/material/Dielectric.h"
 #include "src/material/Isotropic.h"
+#include "src/material/PBRMaterial.h"
 // accelerator
 #include "src/accelerator/HittableList.h"
 #include "src/accelerator/BVH.h"
