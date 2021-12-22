@@ -5,6 +5,15 @@
 #ifndef PROJECT_UTILS_H
 #define PROJECT_UTILS_H
 
+// path
+inline std::string model_pth() {
+#if defined(WINDOWS)
+    return "./";
+#else
+    return "./resources/";
+#endif
+}
+
 // memory
 using std::shared_ptr;
 using std::make_shared;
