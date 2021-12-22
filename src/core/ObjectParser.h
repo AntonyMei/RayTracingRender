@@ -35,6 +35,29 @@ public:
         auto &shapes = reader.GetShapes();
         auto &materials = reader.GetMaterials();
 
+        // build material
+        std::vector<std::shared_ptr<Material>> mat_list;
+        for (const auto &mat: materials) {
+            mat_list.emplace_back(std::make_shared<PBRMaterial>(mat.name,
+                                                                Vector3d(mat.diffuse[0],
+                                                                         mat.diffuse[1],
+                                                                         mat.diffuse[2]),
+                                                                mat.diffuse_texname,
+                                                                Vector3d(mat.specular[0],
+                                                                         mat.specular[1],
+                                                                         mat.specular[2]),
+                                                                mat.shininess,
+                                                                mat.specular_texname,
+                                                                Vector3d(mat.emission[0],
+                                                                         mat.emission[1],
+                                                                         mat.emission[2]),
+                                                                mat.emissive_texname,
+                                                                mat.ior,
+                                                                Vector3d(mat.transmittance[0],
+                                                                         mat.transmittance[1],
+                                                                         mat.transmittance[2])));
+        }
+
         // Loop over shapes
         HittableList mesh_list;
         for (const auto &shape: shapes) {
@@ -88,7 +111,7 @@ public:
 
                 // per-face material (set to Lambertian for debug)
                 // shape.mesh.material_ids[f];
-                auto mat_ptr = std::make_shared<Lambertian>(Color(0.3, 0.4, 0.5));
+                auto mat_ptr = mat_list[shape.mesh.material_ids[f]];
 
                 // create triangle
                 auto triangle_ptr = std::make_shared<Triangle>(vertex_list[0], vertex_list[1],
