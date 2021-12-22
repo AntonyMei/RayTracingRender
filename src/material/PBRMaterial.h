@@ -84,7 +84,12 @@ public:
         // Phong
         auto diffuse_color = kd * (diffuse_texture ? diffuse_texture->uv_color(hit.u, hit.v, hit.hit_point)
                                                    : Color(1, 1, 1));
-        auto specular_color = ks *
+        auto specular_color_base = ks * (specular_texture ? specular_texture->uv_color(hit.u, hit.v, hit.hit_point)
+                                                          : Color(1, 1, 1));
+        Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
+        auto specular_exponent = pow(dot(reflected_dir, ray_out.direction()), shininess) /
+                                 dot(hit.normal, -normalize(ray_in.direction()));
+        return diffuse_color + specular_color_base * specular_exponent;
     }
 
 private:
