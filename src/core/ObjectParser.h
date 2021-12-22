@@ -36,7 +36,7 @@ public:
         auto &materials = reader.GetMaterials();
 
         // build material
-        std::vector<std::shared_ptr<Material>> mat_list;
+        std::vector<std::shared_ptr<PBRMaterial>> mat_list;
         for (const auto &mat: materials) {
             mat_list.emplace_back(std::make_shared<PBRMaterial>(mat.name,
                                                                 Vector3d(mat.diffuse[0],

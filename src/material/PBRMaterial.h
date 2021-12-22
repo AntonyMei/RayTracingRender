@@ -7,7 +7,7 @@
 #ifndef PROJECT_PBRMATERIAL_H
 #define PROJECT_PBRMATERIAL_H
 
-class PBRMaterial : Material {
+class PBRMaterial : public Material {
 public:
     PBRMaterial(std::string name,
                 Color _kd, const std::string &diffuse_map_name,
