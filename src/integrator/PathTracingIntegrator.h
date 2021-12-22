@@ -22,20 +22,16 @@ public:
         if (!world.hit(r, TMIN, inf, hit)) return skybox.get_color(r);
 
         // hit something
-        std::vector<Ray> scattered_list;
-        Color attenuation;
+        Ray scattered_ray;
         Color emit_color = hit.mat_ptr->emit(hit.u, hit.v, hit.hit_point);
 
         // no scattering
-        if (!hit.mat_ptr->scatter(r, hit, attenuation, scattered_list))
+        if (!hit.mat_ptr->scatter(r, hit, scattered_ray))
             return emit_color;
 
         // scattering
-        Color scatter_color;
-        for (const auto &scattered: scattered_list) {
-            scatter_color += cast_ray(scattered, remaining_bounce - 1);
-        }
-        scatter_color /= static_cast<double>(scattered_list.size());
+        Color attenuation = hit.mat_ptr->brdf(r, scattered_ray, hit);
+        Color scatter_color = cast_ray(scattered_ray, remaining_bounce - 1);
         return emit_color + attenuation * scatter_color;
     }
 };

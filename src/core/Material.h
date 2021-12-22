@@ -9,8 +9,9 @@ class Hit;
 
 class Material {
 public:
-    virtual bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
-                         std::vector<Ray> &scattered_rays) const = 0;
+    virtual bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const = 0;
+
+    virtual Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const = 0;
 
     virtual Color emit(double u, double v, const Point &p) const {
         return {0, 0, 0};

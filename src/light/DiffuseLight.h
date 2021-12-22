@@ -14,10 +14,14 @@ public:
             emit_texture(std::make_shared<ColorTexture>(emit_color)),
             intensity(_intensity) {}
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
-                 std::vector<Ray> &scattered_rays) const override {
+    bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const override {
         // lights don't scatter
         return false;
+    }
+
+    Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
+        // no brdf
+        return {0, 0, 0};
     }
 
     Color emit(double u, double v, const Point &p) const override {

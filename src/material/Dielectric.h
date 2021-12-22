@@ -9,10 +9,8 @@ class Dielectric : public Material {
 public:
     explicit Dielectric(double index_of_refraction) : ir(index_of_refraction) {}
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Color &attenuation,
-                 std::vector<Ray> &scattered_rays) const override {
+    bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const override {
         // calculate parameters
-        attenuation = Color(1.0, 1.0, 1.0);
         double refraction_ratio = hit.front_face ? (1.0 / ir) : ir;
 
         Vector3d unit_direction = normalize(ray_in.direction());
@@ -27,8 +25,12 @@ public:
         else
             direction = refract(unit_direction, hit.normal, refraction_ratio);
 
-        scattered_rays.emplace_back(hit.hit_point, direction, ray_in.time());
+        scattered_ray = Ray(hit.hit_point, direction, ray_in.time());
         return true;
+    }
+
+    Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
+        return {1.0, 1.0, 1.0};
     }
 
 private:
