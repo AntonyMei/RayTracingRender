@@ -36,10 +36,10 @@ HittableList test_scene() {
 
     // mesh
 #if defined(WINDOWS)
-    auto obj_name = "paimon.obj";
+    auto obj_name = "CornellBox-Original.obj";
     auto mtl_path = "./";
 #else
-    auto obj_name = "./resources/paimon.obj";
+    auto obj_name = "./resources/CornellBox-Original.obj";
     auto mtl_path = "./resources";
 #endif
     objects.add(ObjectParser(obj_name, mtl_path).parse());
