@@ -37,9 +37,9 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     // 1. Note that motion blur objects should be created with 0.0 - 1.0.
     //    Control motion blur with camera's shutter.
     // 2. use global_light_skybox if no other lights enabled
-    HittableList world = test_scene();
-    SimpleCamera cam = test_camera(aspect_ratio);
-    auto skybox = test_skybox();
+    HittableList world = test_obj_scene();
+    SimpleCamera cam = test_obj_camera(aspect_ratio);
+    auto skybox = test_obj_skybox();
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
     // multiprocessing related (id = 0 - max_processes - 1)

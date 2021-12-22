@@ -5,7 +5,7 @@
 #ifndef PROJECT_TEST_H
 #define PROJECT_TEST_H
 
-HittableList test_scene() {
+HittableList test_obj_scene() {
     HittableList objects;
 
     // mesh
@@ -16,10 +16,10 @@ HittableList test_scene() {
     return objects;
 }
 
-SimpleCamera test_camera(double aspect_ratio) {
+SimpleCamera test_obj_camera(double aspect_ratio) {
     // basic settings
-    Point camera_position(10, 5, 10);
-    Point view_point(0, 5, 0);
+    Point camera_position(0, 1, 0);
+    Point view_point(-1.2, 1, 0);
     Vector3d camera_up(0, 1, 0);
     // fov
     auto vertical_fov = 40.0;
@@ -34,6 +34,6 @@ SimpleCamera test_camera(double aspect_ratio) {
             aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
-SimpleSkybox test_skybox() { return {}; }
+ConstantSkybox test_obj_skybox() { return ConstantSkybox({1, 1, 1}); }
 
 #endif //PROJECT_TEST_H
