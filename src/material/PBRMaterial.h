@@ -9,7 +9,7 @@
 
 class PBRMaterial : public Material {
 public:
-    PBRMaterial(std::string name,
+    PBRMaterial(std::string name, const std::string &mat_pth,
                 Color _kd, const std::string &diffuse_map_name,
                 Color _ks, double _shininess, const std::string &specular_map_name,
                 Color _ke, const std::string &emission_map_name,
@@ -17,12 +17,12 @@ public:
             : material_name(std::move(name)),
               kd(_kd),
               diffuse_texture(diffuse_map_name.empty() ? nullptr :
-                              std::make_shared<ImageTexture>(diffuse_map_name.c_str())),
+                              std::make_shared<ImageTexture>((mat_pth + diffuse_map_name).c_str())),
               ks(_ks), shininess(_shininess),
               specular_texture(specular_map_name.empty() ? nullptr :
-                               std::make_shared<ImageTexture>(specular_map_name.c_str())),
+                               std::make_shared<ImageTexture>((mat_pth + specular_map_name).c_str())),
               ke(_ke), emission_texture(emission_map_name.empty() ? nullptr :
-                                        std::make_shared<ImageTexture>(emission_map_name.c_str())),
+                                        std::make_shared<ImageTexture>((mat_pth + emission_map_name).c_str())),
               ir(_ir), transmission_filter(_tf) {
         auto kd_len = kd.squared_length();
         auto ks_len = ks.squared_length();
