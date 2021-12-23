@@ -40,7 +40,7 @@ SimpleCamera sponza_camera(double aspect_ratio) {
 //SimpleSkybox sponza_skybox() { return SimpleSkybox(5); }
 DirectionalSkybox sponza_skybox() {
     // 1, 5 for sponza
-    return {1, 2, normalize(Vector3d(10, 3, 8)), 0.8};
+    return {1, 5, normalize(Vector3d(1, 20, 2)), 0.8};
 }
 
 #endif //PROJECT_SPONZA_H

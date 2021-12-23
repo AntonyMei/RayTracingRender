@@ -127,7 +127,7 @@ private:
     Color kd;
     std::shared_ptr<Texture> diffuse_texture;
     double prob_diffuse;
-    Vector3d sun_dir{normalize(Vector3d(10, 3, 8))};
+    Vector3d sun_dir{normalize(Vector3d(1, 20, 2))};
 
     // specular
     Color ks;
