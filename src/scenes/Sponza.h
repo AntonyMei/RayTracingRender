@@ -18,8 +18,8 @@ HittableList sponza_scene() {
 
 SimpleCamera sponza_camera(double aspect_ratio) {
     // basic settings
-    Point camera_position(20, 8, 5);
-    Point view_point(0, 8, 0);
+    Point camera_position(5, 50, 5);
+    Point view_point(0, 0, 0);
     Vector3d camera_up(0, 1, 0);
     // fov
     auto vertical_fov = 40.0;
