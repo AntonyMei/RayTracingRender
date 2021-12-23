@@ -9,12 +9,12 @@ class DirectionalSkybox : public Skybox {
 public:
     DirectionalSkybox() = default;
 
-    DirectionalSkybox(double _sky_intensity, double _sun_intensity, Vector3d _dir2sun)
+    DirectionalSkybox(double _sky_intensity, double _sun_intensity, Vector3d _dir2sun, double _radius)
             : sky_intensity(_sky_intensity), sun_intensity(_sun_intensity),
-              dir2sun(normalize(_dir2sun)) {}
+              dir2sun(normalize(_dir2sun)), sun_radius(_radius) {}
 
     Color get_color(Ray r) const override {
-        if (pow(fmax(dot(normalize(r.direction()), dir2sun), 0), 3) > 0.95)
+        if (pow(fmax(dot(normalize(r.direction()), dir2sun), 0), 3) > sun_radius)
             return sun_intensity * Color(1, 1, 0.6);
         else
             return sky_intensity * Color(0.5, 0.7, 1.0);
@@ -24,6 +24,7 @@ private:
     double sky_intensity{1};
     double sun_intensity{3};
     Vector3d dir2sun;
+    double sun_radius{0.6};
 };
 
 #endif //PROJECT_DIRECTIONALSKYBOX_H
