@@ -15,7 +15,7 @@ public:
 
     Color get_color(Ray r) const override {
         if (pow(fmax(dot(normalize(r.direction()), dir2sun), 0), 3) > sun_radius)
-            return sun_intensity * Color(1, 1, 0.6);
+            return sun_intensity * Color(1, 1, 1);
         else
             return sky_intensity * Color(0.5, 0.7, 1.0);
     }
