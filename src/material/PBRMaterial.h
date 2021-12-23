@@ -13,7 +13,7 @@ public:
                 Color _kd, const std::string &diffuse_map_name,
                 Color _ks, double _shininess, const std::string &specular_map_name,
                 Color _ke, const std::string &emission_map_name,
-                double _ir, Color _tf)
+                double _ir, Color _tf, double _dissolve)
             : material_name(std::move(name)),
               kd(_kd),
               diffuse_texture(diffuse_map_name.empty() ? nullptr :
@@ -23,14 +23,13 @@ public:
                                std::make_shared<ImageTexture>((mat_pth + specular_map_name).c_str())),
               ke(_ke), emission_texture(emission_map_name.empty() ? nullptr :
                                         std::make_shared<ImageTexture>((mat_pth + emission_map_name).c_str())),
-              ir(_ir), transmission_filter(_tf) {
+              ir(_ir), transmission_filter(_tf), dissolve(_dissolve) {
         auto kd_len = kd.squared_length();
         auto ks_len = ks.squared_length();
-        auto re_len = transmission_filter.squared_length();
-        auto total_energy = kd_len + ks_len + re_len + EPSILON;
-        prob_diffuse = kd_len / total_energy;
-        prob_specular = ks_len / total_energy;
-        prob_refract = re_len / total_energy;
+        auto total_energy = kd_len + ks_len + EPSILON;
+        prob_refract = 1 - dissolve;
+        prob_diffuse = dissolve * kd_len / total_energy;
+        prob_specular = dissolve * ks_len / total_energy;
     }
 
     Color emit(double u, double v, const Point &p) const override {
@@ -121,6 +120,7 @@ private:
     // refraction
     double ir;  // dielectric's eta of refraction
     Color transmission_filter;  // attenuation to refracted ray
+    double dissolve;
     double prob_refract;
 
     // emission

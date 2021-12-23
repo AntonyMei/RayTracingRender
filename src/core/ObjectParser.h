@@ -53,9 +53,10 @@ public:
                                                                          mat.emission[2]),
                                                                 mat.emissive_texname,
                                                                 mat.ior,
-                                                                (1 - mat.dissolve) * Vector3d(mat.transmittance[0],
-                                                                                              mat.transmittance[1],
-                                                                                              mat.transmittance[2])));
+                                                                Vector3d(mat.transmittance[0],
+                                                                         mat.transmittance[1],
+                                                                         mat.transmittance[2]),
+                                                                mat.dissolve));
         }
 
         // Loop over shapes
