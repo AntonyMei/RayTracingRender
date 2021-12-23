@@ -18,7 +18,7 @@ HittableList sponza_scene() {
 
 SimpleCamera sponza_camera(double aspect_ratio) {
     // basic settings
-    Point camera_position(5, 50, 5);
+    Point camera_position(5, 10, 5);
     Point view_point(0, 0, 0);
     Vector3d camera_up(0, 1, 0);
     // fov
@@ -35,6 +35,6 @@ SimpleCamera sponza_camera(double aspect_ratio) {
 }
 
 //ConstantSkybox sponza_skybox() { return ConstantSkybox({0, 0, 0}); }
-SimpleSkybox sponza_skybox() { return {}; }
+SimpleSkybox sponza_skybox() { return SimpleSkybox(10); }
 
 #endif //PROJECT_SPONZA_H
