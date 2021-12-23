@@ -11,7 +11,7 @@ public:
 
     explicit Lambertian(std::shared_ptr<Texture> a) : albedo(std::move(a)) {}
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const override {
+    bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         // get scatter direction
         auto scatter_direction = hit.normal + random_unit_vector();
         if (scatter_direction.near_zero())

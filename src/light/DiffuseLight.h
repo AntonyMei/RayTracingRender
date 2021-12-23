@@ -14,7 +14,7 @@ public:
             emit_texture(std::make_shared<ColorTexture>(emit_color)),
             intensity(_intensity) {}
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const override {
+    bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         // lights don't scatter
         return false;
     }

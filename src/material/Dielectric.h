@@ -9,7 +9,7 @@ class Dielectric : public Material {
 public:
     explicit Dielectric(double index_of_refraction) : ir(index_of_refraction) {}
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const override {
+    bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         // calculate parameters
         double refraction_ratio = hit.front_face ? (1.0 / ir) : ir;
 

@@ -13,7 +13,7 @@ public:
 
     explicit Isotropic(std::shared_ptr<Texture> texture) : albedo(std::move(texture)) {}
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const override {
+    bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         scattered_ray = Ray(hit.hit_point, random_in_unit_sphere(), ray_in.time());
         return true;
     }

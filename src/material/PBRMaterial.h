@@ -37,7 +37,7 @@ public:
         return ke * (emission_texture ? emission_texture->uv_color(u, v, p) : Color(1, 1, 1));
     }
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const override {
+    bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         auto mode = scatter_type();
         if (mode == 0) {
             // get scatter direction
@@ -47,6 +47,7 @@ public:
 
             // generate scattered rays
             scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
+            hit.scatter_mode = 0;
             return true;
         } else if (mode == 1) {
             // get reflected direction (include perturbation for imperfect reflection)
@@ -55,6 +56,7 @@ public:
 
             // generate rays
             scattered_ray = Ray(hit.hit_point, reflected_dir, ray_in.time());
+            hit.scatter_mode = 1;
             return (dot(reflected_dir, hit.normal) > 0);
         } else if (mode == 2) {
             // calculate parameters
@@ -67,11 +69,13 @@ public:
             // generate new ray's direction
             bool cannot_refract = refraction_ratio * sin_theta > 1.0;
             Vector3d direction;
-            if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double())
+            if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double()){
                 direction = reflect(unit_direction, hit.normal);
-            else
+                hit.scatter_mode = 1;
+            } else {
                 direction = refract(unit_direction, hit.normal, refraction_ratio);
-
+                hit.scatter_mode = 2;
+            }
             scattered_ray = Ray(hit.hit_point, direction, ray_in.time());
             return true;
         } else {
@@ -82,14 +86,18 @@ public:
 
     inline Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
         // Phong
-        auto diffuse_color = kd * (diffuse_texture ? diffuse_texture->uv_color(hit.u, hit.v, hit.hit_point)
-                                                   : Color(1, 1, 1));
-        auto specular_color_base = ks * (specular_texture ? specular_texture->uv_color(hit.u, hit.v, hit.hit_point)
-                                                          : Color(1, 1, 1));
-        Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
-        auto specular_exponent = pow(dot(reflected_dir, normalize(ray_out.direction())), shininess) /
-                                 dot(hit.normal, -normalize(ray_in.direction()));
-        return diffuse_color + specular_color_base * specular_exponent;
+        if (hit.scatter_mode == 0 || hit.scatter_mode == 1) {
+            auto diffuse_color = kd * (diffuse_texture ? diffuse_texture->uv_color(hit.u, hit.v, hit.hit_point)
+                                                       : Color(1, 1, 1));
+            auto specular_color_base = ks * (specular_texture ? specular_texture->uv_color(hit.u, hit.v, hit.hit_point)
+                                                              : Color(1, 1, 1));
+            Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
+            auto specular_exponent = pow(dot(reflected_dir, normalize(ray_out.direction())), shininess) /
+                                     dot(hit.normal, -normalize(ray_in.direction()));
+            return diffuse_color + specular_color_base * specular_exponent;
+        } else if (hit.scatter_mode == 2) {
+            return transmission_filter;
+        }
     }
 
 private:
@@ -109,7 +117,7 @@ private:
 
     // refraction
     double ir;  // dielectric's eta of refraction
-    Color transmission_filter;  // 1: no passing through
+    Color transmission_filter;  // attenuation to refracted ray
     double prob_refract;
 
     // emission

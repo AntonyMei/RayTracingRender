@@ -13,7 +13,7 @@ public:
 
     Metal(std::shared_ptr<Texture> a, double f) : albedo(std::move(a)), fuzz(f < 1 ? f : 1) {}
 
-    bool scatter(const Ray &ray_in, const Hit &hit, Ray &scattered_ray) const override {
+    bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         // get reflected direction (include perturbation for imperfect reflection)
         Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
         reflected_dir += fuzz * random_in_unit_sphere();
