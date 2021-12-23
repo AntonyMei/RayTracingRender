@@ -39,15 +39,27 @@ public:
     bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         auto mode = scatter_type();
         if (mode == 0) {
-            // get scatter direction
-            auto scatter_direction = hit.normal + random_unit_vector();
-            if (scatter_direction.near_zero())
-                scatter_direction = hit.normal;
+            if (random_double() > 0.1) {
+                // get scatter direction
+                auto scatter_direction = hit.normal + random_unit_vector();
+                if (scatter_direction.near_zero())
+                    scatter_direction = hit.normal;
 
-            // generate scattered rays
-            scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
-            hit.scatter_mode = 0;
-            return true;
+                // generate scattered rays
+                scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
+                hit.scatter_mode = 0;
+                return true;
+            } else {
+                // get scatter direction
+                auto scatter_direction = sun_dir;
+                if (scatter_direction.near_zero())
+                    scatter_direction = hit.normal;
+
+                // generate scattered rays
+                scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
+                hit.scatter_mode = 0;
+                return true;
+            }
         } else if (mode == 1) {
             // get reflected direction (include perturbation for imperfect reflection)
             Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
@@ -115,6 +127,7 @@ private:
     Color kd;
     std::shared_ptr<Texture> diffuse_texture;
     double prob_diffuse;
+    Vector3d sun_dir{normalize(Vector3d(10, 3, 8))};
 
     // specular
     Color ks;
