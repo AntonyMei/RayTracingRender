@@ -69,7 +69,7 @@ public:
             // generate new ray's direction
             bool cannot_refract = refraction_ratio * sin_theta > 1.0;
             Vector3d direction;
-            if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double()){
+            if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double()) {
                 direction = reflect(unit_direction, hit.normal);
                 hit.scatter_mode = 1;
             } else {
@@ -97,6 +97,9 @@ public:
             return diffuse_color + specular_color_base * specular_exponent;
         } else if (hit.scatter_mode == 2) {
             return transmission_filter;
+        } else {
+            std::cerr << "Unknown scatter mode" << std::endl;
+            return {0, 1, 1};
         }
     }
 
