@@ -108,6 +108,6 @@
 #include "src/scenes/CornellBoxParticipatingMedia.h"
 #include "src/scenes/Book2Final.h"
 #include "src/scenes/Test.h"
-#include "src/scenes/Bedroom.h"
+#include "src/scenes/Sponza.h"
 
 #endif //PROJECT_HEADERS_H

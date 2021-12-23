@@ -2,21 +2,21 @@
 // Created by meiyixuan on 2021-12-23.
 //
 
-#ifndef PROJECT_BEDROOM_H
-#define PROJECT_BEDROOM_H
+#ifndef PROJECT_SPONZA_H
+#define PROJECT_SPONZA_H
 
-HittableList bedroom_scene() {
+HittableList sponza_scene() {
     HittableList objects;
 
     // mesh
-    auto obj_name = model_pth() + "bedroom/iscv2.obj";
-    auto mtl_path = model_pth() + "bedroom/";
+    auto obj_name = model_pth() + "sponza/sponza.obj";
+    auto mtl_path = model_pth() + "sponza/";
     objects.add(ObjectParser(obj_name, mtl_path).parse());
 
     return objects;
 }
 
-SimpleCamera bedroom_camera(double aspect_ratio) {
+SimpleCamera sponza_camera(double aspect_ratio) {
     // basic settings
     Point camera_position(20, 8, 5);
     Point view_point(0, 8, 0);
@@ -34,7 +34,7 @@ SimpleCamera bedroom_camera(double aspect_ratio) {
             aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
-//ConstantSkybox bedroom_skybox() { return ConstantSkybox({0, 0, 0}); }
-SimpleSkybox bedroom_skybox() { return {}; }
+//ConstantSkybox sponza_skybox() { return ConstantSkybox({0, 0, 0}); }
+SimpleSkybox sponza_skybox() { return {}; }
 
-#endif //PROJECT_BEDROOM_H
+#endif //PROJECT_SPONZA_H
