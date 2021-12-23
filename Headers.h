@@ -109,5 +109,6 @@
 #include "src/scenes/Book2Final.h"
 #include "src/scenes/TestObj.h"
 #include "src/scenes/Sponza.h"
+#include "src/scenes/TestTriangle.h"
 
 #endif //PROJECT_HEADERS_H
