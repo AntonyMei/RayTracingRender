@@ -24,7 +24,11 @@ public:
     Triangle(std::shared_ptr<Vertex> v0, std::shared_ptr<Vertex> v1, std::shared_ptr<Vertex> v2,
              std::shared_ptr<Material> m) : Hittable(std::move(m)),
                                             normal(normalize(cross(v1->point - v0->point, v2->point - v0->point))),
-                                            vertices{std::move(v0), std::move(v1), std::move(v2)} {}
+                                            vertices{std::move(v0), std::move(v1), std::move(v2)} {
+        if (v0->normal.length() <= EPSILON && v1->normal.length() <= EPSILON && v2->normal.length() <= EPSILON) {
+            use_computed_normal = true;
+        }
+    }
 
     bool hit(const Ray &ray, double t_min, double t_max, Hit &hit) const override {
         // initialize (Möller–Trumbore intersection algorithm)
@@ -50,10 +54,18 @@ public:
         if (t < t_min || t > t_max) return false;
         hit.t = t;
         hit.hit_point = ray.at(t);
-        hit.normal = normal; // can also clip
-        hit.set_face_normal(ray, normal);
         hit.mat_ptr = mat_ptr;
-        get_triangle_uv(hit.hit_point, hit.u, hit.v);
+        // set normal
+        double w0, w1, w2;
+        barycentric(hit.hit_point, w0, w1, w2);
+        if (!use_computed_normal)
+            hit.normal = w0 * vertices[0]->normal + w1 * vertices[1]->normal + w2 * vertices[2]->normal;
+        else
+            hit.normal = normal;
+        hit.set_face_normal(ray, normal);
+        // set u v
+        hit.u = w0 * vertices[0]->u + w1 * vertices[1]->u + w2 * vertices[2]->u;
+        hit.v = w0 * vertices[0]->v + w1 * vertices[1]->v + w2 * vertices[2]->v;
         return true;
     }
 
@@ -87,6 +99,7 @@ public:
     }
 
 private:
+    bool use_computed_normal{false};
     Vector3d normal;
     std::shared_ptr<Vertex> vertices[3];
 
