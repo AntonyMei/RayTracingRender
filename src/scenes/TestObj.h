@@ -2,8 +2,8 @@
 // Created by meiyixuan on 2021-12-20.
 //
 
-#ifndef PROJECT_TEST_H
-#define PROJECT_TEST_H
+#ifndef PROJECT_TESTOBJ_H
+#define PROJECT_TESTOBJ_H
 
 HittableList test_obj_scene() {
     HittableList objects;
@@ -36,4 +36,4 @@ SimpleCamera test_obj_camera(double aspect_ratio) {
 
 ConstantSkybox test_obj_skybox() { return ConstantSkybox({0, 0, 0}); }
 
-#endif //PROJECT_TEST_H
+#endif //PROJECT_TESTOBJ_H
