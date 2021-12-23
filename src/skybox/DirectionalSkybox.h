@@ -14,15 +14,15 @@ public:
               dir2sun(normalize(_dir2sun)) {}
 
     Color get_color(Ray r) const override {
-        auto sun = sun_intensity * pow(fmax(dot(normalize(r.direction()), dir2sun), 0),
-                                       20) * Color(1, 1, 0.6);
-        auto sky = sky_intensity * Color(0.5, 0.7, 1.0);
-        return sun + sky;
+        if (pow(fmax(dot(normalize(r.direction()), dir2sun), 0), 3) > 0.95)
+            return sun_intensity * Color(1, 1, 0.6);
+        else
+            return sky_intensity * Color(0.5, 0.7, 1.0);
     }
 
 private:
-    double sky_intensity{2};
-    double sun_intensity{10};
+    double sky_intensity{1};
+    double sun_intensity{3};
     Vector3d dir2sun;
 };
 
