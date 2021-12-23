@@ -39,9 +39,11 @@ public:
             u = clamp(u, 0.0, 1.0);
             v = 1.0 - clamp(v, 0.0, 1.0);
         } else if (uv_clamp_type == 1) {
-            u = u - int(u);
-            v = v - int(v);
+            u = u - floor(u);
+            v = v - floor(v);
         }
+        if (u < 0 || u > 1.0) std::cerr << "error u " << u << std::endl;
+        if (v < 0 || v > 1.0) std::cerr << "error v " << v << std::endl;
         auto i = static_cast<int>(u * width);
         auto j = static_cast<int>(v * height);
         i = i >= width ? width - 1 : i;
