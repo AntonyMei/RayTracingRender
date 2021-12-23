@@ -91,8 +91,13 @@ public:
             auto specular_color_base = specular_texture ? ks * specular_texture->uv_color(hit.u, hit.v, hit.hit_point)
                                                         : ks;
             Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
-            auto specular_exponent = pow(dot(reflected_dir, normalize(ray_out.direction())), shininess) /
-                                     dot(hit.normal, -normalize(ray_in.direction()));
+            auto specular_exponent = pow(dot(reflected_dir, normalize(ray_out.direction())), shininess)
+                                     / dot(hit.normal, -normalize(ray_in.direction()));
+            specular_exponent = fmax(EPSILON * EPSILON, specular_exponent);
+            specular_exponent = fmin(5.0, specular_exponent);
+//            if (random_double() < 0.0000001)
+//                std::cerr << "specular_exponent " << specular_exponent << std::endl;
+
             return diffuse_color + specular_color_base * specular_exponent;
         } else if (hit.scatter_mode == 2) {
             return transmission_filter;

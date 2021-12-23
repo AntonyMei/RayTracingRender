@@ -13,6 +13,7 @@ HittableList sponza_scene() {
     auto mtl_path = model_pth() + "sponza/";
     objects.add(ObjectParser(obj_name, mtl_path).parse());
 
+//    // test brdf
 //    auto mat_ptr = std::make_shared<PBRMaterial>("", "",
 //                                                 Color(0, 0, 0), "",
 //                                                 Color(0.8, 0.6, 0.2), 1, "",
@@ -60,6 +61,12 @@ SimpleCamera sponza_camera(double aspect_ratio) {
 }
 
 //ConstantSkybox sponza_skybox() { return ConstantSkybox(Color(1, 1, 1) * 5); }
-SimpleSkybox sponza_skybox() { return SimpleSkybox(5); }
+//SimpleSkybox sponza_skybox() { return SimpleSkybox(5); }
+DirectionalSkybox sponza_skybox() {
+    // sky_intensity: 0 - 1, sun_intensity: 100
+    // {1, 6,Vector3d(0, 0.5, -1)}; , 0.95
+    // 1, 5 for sponza
+    return {1, 5, Vector3d(0, 1, 0), 0.5};
+}
 
 #endif //PROJECT_SPONZA_H
