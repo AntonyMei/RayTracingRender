@@ -13,7 +13,8 @@ public:
                 Color _kd, const std::string &diffuse_map_name,
                 Color _ks, double _shininess, const std::string &specular_map_name,
                 Color _ke, const std::string &emission_map_name,
-                double _ir, Color _tf, double _dissolve)
+                double _ir, Color _tf, double _dissolve,
+                double _light_sample_probability = 0, Vector3d _sun_dir = Vector3d())
             : material_name(std::move(name)),
               kd(_kd),
               diffuse_texture(diffuse_map_name.empty() ? nullptr :
@@ -23,7 +24,8 @@ public:
                                std::make_shared<ImageTexture>((mat_pth + specular_map_name).c_str())),
               ke(_ke), emission_texture(emission_map_name.empty() ? nullptr :
                                         std::make_shared<ImageTexture>((mat_pth + emission_map_name).c_str())),
-              ir(_ir), transmission_filter(_tf), dissolve(_dissolve) {
+              ir(_ir), transmission_filter(_tf), dissolve(_dissolve),
+              sample_light_prob(_light_sample_probability), sun_dir(_sun_dir) {
         auto kd_len = kd.squared_length();
         auto ks_len = ks.squared_length();
         auto total_energy = kd_len + ks_len + EPSILON;
@@ -39,7 +41,7 @@ public:
     bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         auto mode = scatter_type();
         if (mode == 0) {
-            if (random_double() > 0.1) {
+            if (random_double() > sample_light_prob) {
                 // get scatter direction
                 auto scatter_direction = hit.normal + random_unit_vector();
                 if (scatter_direction.near_zero())
@@ -127,7 +129,6 @@ private:
     Color kd;
     std::shared_ptr<Texture> diffuse_texture;
     double prob_diffuse;
-    Vector3d sun_dir{normalize(Vector3d(1, 20, 2))};
 
     // specular
     Color ks;
@@ -144,6 +145,10 @@ private:
     // emission
     Color ke;
     std::shared_ptr<Texture> emission_texture;
+
+    // sampler
+    double sample_light_prob{0};
+    Vector3d sun_dir;
 
     int scatter_type() const {
         // 0 diffuse, 1 reflect, 2 refract

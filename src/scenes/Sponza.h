@@ -11,7 +11,8 @@ HittableList sponza_scene() {
     // mesh
     auto obj_name = model_pth() + "sponza/sponza.obj";
     auto mtl_path = model_pth() + "sponza/";
-    objects.add(ObjectParser(obj_name, mtl_path).parse());
+    auto parser = ObjectParser(obj_name, mtl_path);
+    objects.add(parser.parse(0.1, normalize(Vector3d(1, 20, 2))));
 
     return objects;
 }
