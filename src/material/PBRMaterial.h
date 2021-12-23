@@ -86,10 +86,10 @@ public:
     inline Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
         // Phong
         if (hit.scatter_mode == 0 || hit.scatter_mode == 1) {
-            auto diffuse_color = kd * (diffuse_texture ? diffuse_texture->uv_color(hit.u, hit.v, hit.hit_point)
-                                                       : Color(1, 1, 1));
-            auto specular_color_base = ks * (specular_texture ? specular_texture->uv_color(hit.u, hit.v, hit.hit_point)
-                                                              : Color(1, 1, 1));
+            auto diffuse_color = diffuse_texture ? kd * diffuse_texture->uv_color(hit.u, hit.v, hit.hit_point)
+                                                 : kd;
+            auto specular_color_base = specular_texture ? ks * specular_texture->uv_color(hit.u, hit.v, hit.hit_point)
+                                                        : ks;
             Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
             auto specular_exponent = pow(dot(reflected_dir, normalize(ray_out.direction())), shininess) /
                                      dot(hit.normal, -normalize(ray_in.direction()));
