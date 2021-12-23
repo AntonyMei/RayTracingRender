@@ -89,6 +89,7 @@
 // skybox
 #include "src/skybox/SimpleSkybox.h"
 #include "src/skybox/ConstantSkybox.h"
+#include "src/skybox/DirectionalSkybox.h"
 // integrator
 #include "src/integrator/PathTracingIntegrator.h"
 // medium
