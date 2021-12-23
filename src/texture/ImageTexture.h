@@ -12,7 +12,7 @@ public:
 
     ImageTexture() = default;
 
-    explicit ImageTexture(const char *filename) {
+    explicit ImageTexture(const char *filename, int clamp_type = 1) {
         // load image using stb image
         auto components_per_pixel = bytes_per_pixel;
         data = stbi_load(filename, &width, &height, &components_per_pixel, components_per_pixel);
@@ -25,6 +25,7 @@ public:
 
         // set parameter
         bytes_per_scanline = bytes_per_pixel * width;
+        uv_clamp_type = clamp_type;
     }
 
     ~ImageTexture() { delete[] data; }
@@ -34,8 +35,13 @@ public:
         if (data == nullptr) return {0, 1, 1};
 
         // parse input
-        u = clamp(u, 0.0, 1.0);
-        v = 1.0 - clamp(v, 0.0, 1.0);
+        if (uv_clamp_type == 0) {
+            u = clamp(u, 0.0, 1.0);
+            v = 1.0 - clamp(v, 0.0, 1.0);
+        } else if (uv_clamp_type == 1) {
+            u = u - int(u);
+            v = v - int(v);
+        }
         auto i = static_cast<int>(u * width);
         auto j = static_cast<int>(v * height);
         i = i >= width ? width - 1 : i;
@@ -51,7 +57,7 @@ private:
     unsigned char *data{nullptr};
     int width{0}, height{0};
     int bytes_per_scanline{0};
-
+    int uv_clamp_type{-1};  // 0: clamp 1: mod
 };
 
 #endif //PROJECT_IMAGETEXTURE_H
