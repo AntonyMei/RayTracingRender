@@ -25,7 +25,9 @@ public:
              std::shared_ptr<Material> m) : Hittable(std::move(m)),
                                             normal(normalize(cross(v1->point - v0->point, v2->point - v0->point))),
                                             vertices{std::move(v0), std::move(v1), std::move(v2)} {
-        if (v0->normal.length() <= EPSILON && v1->normal.length() <= EPSILON && v2->normal.length() <= EPSILON) {
+        if (vertices[0]->normal.length() <= EPSILON &&
+            vertices[1]->normal.length() <= EPSILON &&
+            vertices[2]->normal.length() <= EPSILON) {
             use_computed_normal = true;
         }
     }
