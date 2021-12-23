@@ -51,7 +51,7 @@ public:
         } else if (mode == 1) {
             // get reflected direction (include perturbation for imperfect reflection)
             Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
-            reflected_dir += random_in_unit_sphere();
+            // reflected_dir += random_in_unit_sphere();
 
             // generate rays
             scattered_ray = Ray(hit.hit_point, reflected_dir, ray_in.time());
