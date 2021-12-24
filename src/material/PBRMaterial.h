@@ -55,7 +55,7 @@ public:
             } else {
                 // sample more light for better convergence
                 // get scatter direction
-                auto scatter_direction = sun_dir + 0.1 * random_in_unit_sphere();
+                auto scatter_direction = sun_dir + 0.02 * random_in_unit_sphere();
                 if (dot(scatter_direction, hit.normal) <= 0)
                     scatter_direction = hit.normal + random_unit_vector();
                 if (scatter_direction.near_zero())
