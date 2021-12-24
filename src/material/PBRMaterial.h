@@ -41,22 +41,25 @@ public:
     bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         auto mode = scatter_type();
         if (mode == 0) {
+            // mode = 0: defuse material
             if (random_double() > sample_light_prob) {
+                // a random direction sampler
                 // get scatter direction
                 auto scatter_direction = hit.normal + random_unit_vector();
                 if (scatter_direction.near_zero())
                     scatter_direction = hit.normal;
-
                 // generate scattered rays
                 scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
                 hit.scatter_mode = 0;
                 return true;
             } else {
+                // sample more light for better convergence
                 // get scatter direction
-                auto scatter_direction = sun_dir;
+                auto scatter_direction = sun_dir + 0.1 * random_in_unit_sphere();
+                if (dot(scatter_direction, hit.normal) <= 0)
+                    scatter_direction = hit.normal + random_unit_vector();
                 if (scatter_direction.near_zero())
                     scatter_direction = hit.normal;
-
                 // generate scattered rays
                 scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
                 hit.scatter_mode = 0;
