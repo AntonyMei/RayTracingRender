@@ -65,12 +65,14 @@
 #include "src/texture/PerlinTexture.h"
 #include "src/texture/MarbleTexture.h"
 #include "src/texture/ImageTexture.h"
+#include "src/texture/BumpTexture.h"
 // material
 #include "src/material/Lambertian.h"
 #include "src/material/Metal.h"
 #include "src/material/Dielectric.h"
 #include "src/material/Isotropic.h"
 #include "src/material/PBRMaterial.h"
+#include "src/material/BumpMaterial.h"
 // accelerator
 #include "src/accelerator/HittableList.h"
 #include "src/accelerator/BVH.h"
