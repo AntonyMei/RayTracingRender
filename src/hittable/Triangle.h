@@ -199,13 +199,15 @@ private:
                 }
             }
             // unable to recover and log
-            std::cerr << "Failed to map uv to xyz" << std::endl;
-            if (random_double() < 1) {
-                std::cerr << vertices[0]->u << "     " << vertices[0]->v << std::endl;
-                std::cerr << vertices[1]->u << "     " << vertices[1]->v << std::endl;
-                std::cerr << vertices[1]->u << "     " << vertices[1]->v << std::endl;
-                std::cerr << std::endl;
-            }
+//            std::cerr << "Failed to map uv to xyz" << std::endl;
+//            if (random_double() < 1) {
+//                std::cerr << vertices[0]->u << "     " << vertices[0]->v << std::endl;
+//                std::cerr << vertices[1]->u << "     " << vertices[1]->v << std::endl;
+//                std::cerr << vertices[1]->u << "     " << vertices[1]->v << std::endl;
+//                std::cerr << std::endl;
+//            }
+            u_vec = Vector3d();
+            v_vec = Vector3d();
             return;
         }
         // calculate for u
