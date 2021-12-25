@@ -37,7 +37,7 @@ public:
 
     Vector3d get_normal(double u, double v) {
         // return 0 if bump texture not found
-        if (data == nullptr) return {0, 0, 0};
+        if (data == nullptr) return {0, 0, 1};
 
         // parse input
         if (uv_clamp_type == 0) {
@@ -70,6 +70,9 @@ public:
         } else if (bump_map_type == 1) {
             auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
             return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
+        } else {
+            std::cerr << "Unknown bump map type" << std::endl;
+            return {0, 0, 1};
         }
     }
 
