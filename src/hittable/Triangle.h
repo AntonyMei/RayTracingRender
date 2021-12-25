@@ -22,9 +22,10 @@ public:
     Triangle() = default;
 
     Triangle(std::shared_ptr<Vertex> v0, std::shared_ptr<Vertex> v1, std::shared_ptr<Vertex> v2,
-             std::shared_ptr<Material> m) : Hittable(std::move(m)),
-                                            normal(normalize(cross(v1->point - v0->point, v2->point - v0->point))),
-                                            vertices{std::move(v0), std::move(v1), std::move(v2)} {
+             std::shared_ptr<Material> m, std::shared_ptr<BumpMaterial> b = nullptr)
+            : Hittable(std::move(m)), bump_ptr(std::move(b)),
+              normal(normalize(cross(v1->point - v0->point, v2->point - v0->point))),
+              vertices{std::move(v0), std::move(v1), std::move(v2)} {
         if (vertices[0]->normal.length() <= EPSILON &&
             vertices[1]->normal.length() <= EPSILON &&
             vertices[2]->normal.length() <= EPSILON) {
@@ -61,9 +62,21 @@ public:
         double w0, w1, w2;
         barycentric(hit.hit_point, w0, w1, w2);
         if (!use_computed_normal)
-            hit.normal = w0 * vertices[0]->normal + w1 * vertices[1]->normal + w2 * vertices[2]->normal;
+            hit.normal = normalize(w0 * vertices[0]->normal +
+                                   w1 * vertices[1]->normal +
+                                   w2 * vertices[2]->normal);
         else
             hit.normal = normal;
+        // set bump
+        if (bump_ptr) {
+            // get perturbation
+            auto perturb0 = bump_ptr->get_normal(vertices[0]->u, vertices[0]->v);
+            auto perturb1 = bump_ptr->get_normal(vertices[1]->u, vertices[1]->v);
+            auto perturb2 = bump_ptr->get_normal(vertices[2]->u, vertices[2]->v);
+            auto perturb = w0 * perturb0 + w1 * perturb1 + w2 * perturb2;
+            perturb -= dot(perturb, hit.normal) * hit.normal;
+            hit.normal = normalize(hit.normal + perturb);
+        }
         hit.set_face_normal(ray, normal);
         // set u v
         hit.u = w0 * vertices[0]->u + w1 * vertices[1]->u + w2 * vertices[2]->u;
@@ -104,6 +117,7 @@ private:
     bool use_computed_normal{false};
     Vector3d normal;
     std::shared_ptr<Vertex> vertices[3];
+    std::shared_ptr<BumpMaterial> bump_ptr;
 
     inline void barycentric(const Point &p, double &u, double &v, double &w) const {
         // Compute barycentric coordinates (u, v, w) for

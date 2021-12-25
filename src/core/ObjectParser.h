@@ -37,6 +37,7 @@ public:
 
         // build material
         std::vector<std::shared_ptr<PBRMaterial>> mat_list;
+        std::vector<std::shared_ptr<BumpMaterial>> bump_list;
         for (const auto &mat: materials) {
             mat_list.emplace_back(std::make_shared<PBRMaterial>(mat.name, mtl_path,
                                                                 Vector3d(mat.diffuse[0],
@@ -59,6 +60,8 @@ public:
                                                                 mat.dissolve,
                                                                 light_sample_probability,
                                                                 sun_dir));
+            bump_list.emplace_back(mat.bump_texname.empty() ? nullptr :
+                                   std::make_shared<BumpMaterial>(mtl_path, mat.bump_texname));
         }
 
         // Loop over shapes
@@ -115,10 +118,11 @@ public:
                 // per-face material (set to Lambertian for debug)
                 // shape.mesh.material_ids[f];
                 auto mat_ptr = mat_list[shape.mesh.material_ids[f]];
+                auto bump_ptr = bump_list[shape.mesh.material_ids[f]];
 
                 // create triangle
                 auto triangle_ptr = std::make_shared<Triangle>(vertex_list[0], vertex_list[1],
-                                                               vertex_list[2], mat_ptr);
+                                                               vertex_list[2], mat_ptr, bump_ptr);
                 triangles.push_back(triangle_ptr);
             }
 
