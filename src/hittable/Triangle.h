@@ -178,6 +178,7 @@ private:
                     double v_scale = 1 / (v_max - v_min);
                     v_vec = (vertices[max_id]->point - vertices[min_id]->point) * v_scale;
                     u_vec = Vector3d();
+                    u_degrade_triangles += 1;
                     return;
                 }
             }
@@ -195,6 +196,7 @@ private:
                     double u_scale = 1 / (u_max - u_min);
                     v_vec = Vector3d();
                     u_vec = (vertices[max_id]->point - vertices[min_id]->point) * u_scale;
+                    v_degrade_triangles += 1;
                     return;
                 }
             }
@@ -208,6 +210,7 @@ private:
 //            }
             u_vec = Vector3d();
             v_vec = Vector3d();
+            unrecoverable_triangles += 1;
             return;
         }
         // calculate for u
@@ -218,6 +221,7 @@ private:
         double vx = -b1 / denominator;
         double vy = a1 / denominator;
         v_vec = vx * a_xyz + vy * b_xyz;
+        normal_triangles += 1;
     }
 
     static inline double min3(const double &a, const double &b, const double &c) {

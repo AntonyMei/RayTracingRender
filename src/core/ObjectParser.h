@@ -132,6 +132,15 @@ public:
             mesh_list.add(mesh);
         }
 
+        // output parse statistics
+        std::cerr << "*********************Parser Statistics*********************" << std::endl;
+        std::cerr << "UV Mapping:" << std::endl;
+        std::cerr << "Normal: " << normal_triangles << std::endl;
+        std::cerr << "U-degrade: " << u_degrade_triangles << std::endl;
+        std::cerr << "V-degrade: " << v_degrade_triangles << std::endl;
+        std::cerr << "Unrecoverable: " << unrecoverable_triangles << std::endl;
+        std::cerr << "***********************************************************" << std::endl;
+
         return std::make_shared<BVHNode>(mesh_list, 0.0, 1.0);
     }
 
