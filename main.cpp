@@ -1,6 +1,6 @@
 //
 // Created by meiyixuan on 2021-12-09.
-// This is dev branch.
+// This is RayTracer3.0, add support for .obj (and .mtl)
 //
 #include "Headers.h"
 
