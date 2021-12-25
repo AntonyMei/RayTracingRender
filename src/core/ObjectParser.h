@@ -14,7 +14,7 @@ public:
     explicit ObjectParser(std::string _filename, std::string _mtl_path)
             : filename(std::move(_filename)), mtl_path(std::move(_mtl_path)) {}
 
-    std::shared_ptr<BVHNode> parse(int bump_map_type, double light_sample_probability = 0,
+    std::shared_ptr<BVHNode> parse(int bump_map_type=0, double light_sample_probability = 0,
                                    Vector3d sun_dir = Vector3d()) {
         // create reader
         tinyobj::ObjReaderConfig reader_config;
