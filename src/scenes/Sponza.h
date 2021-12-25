@@ -12,8 +12,8 @@ HittableList sponza_scene() {
     auto obj_name = model_pth() + "sponza/sponza.obj";
     auto mtl_path = model_pth() + "sponza/";
     auto parser = ObjectParser(obj_name, mtl_path);
-//    objects.add(parser.parse());
-    objects.add(parser.parse(0.1, normalize(Vector3d(1, 20, 2))));
+    objects.add(parser.parse(0, 0.1,
+                             normalize(Vector3d(1, 20, 2))));
 
     return objects;
 }
@@ -38,8 +38,6 @@ SimpleCamera sponza_camera(double aspect_ratio) {
             aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
-//ConstantSkybox sponza_skybox() { return ConstantSkybox(Color(1, 1, 1) * 5); }
-//SimpleSkybox sponza_skybox() { return SimpleSkybox(5); }
 DirectionalSkybox sponza_skybox() {
     // 1, 5 for sponza
     return {1, 5, normalize(Vector3d(1, 20, 2)), 0.8};

@@ -14,8 +14,8 @@ public:
     explicit ObjectParser(std::string _filename, std::string _mtl_path)
             : filename(std::move(_filename)), mtl_path(std::move(_mtl_path)) {}
 
-    std::shared_ptr<BVHNode> parse(double light_sample_probability = 0, Vector3d sun_dir = Vector3d()) {
-
+    std::shared_ptr<BVHNode> parse(int bump_map_type, double light_sample_probability = 0,
+                                   Vector3d sun_dir = Vector3d()) {
         // create reader
         tinyobj::ObjReaderConfig reader_config;
         reader_config.mtl_search_path = mtl_path; // Path to material files
@@ -61,7 +61,8 @@ public:
                                                                 light_sample_probability,
                                                                 sun_dir));
             bump_list.emplace_back(mat.bump_texname.empty() ? nullptr :
-                                   std::make_shared<BumpMaterial>(mtl_path, mat.bump_texname));
+                                   std::make_shared<BumpMaterial>(mtl_path, mat.bump_texname,
+                                                                  bump_map_type));
         }
 
         // Loop over shapes

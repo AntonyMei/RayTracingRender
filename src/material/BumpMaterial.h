@@ -9,9 +9,10 @@ class BumpMaterial : public Material {
 public:
     BumpMaterial() = default;
 
-    BumpMaterial(const std::string &mat_pth, const std::string &bump_map_name)
+    BumpMaterial(const std::string &mat_pth, const std::string &bump_map_name, int bump_map_type)
             : bump_map(bump_map_name.empty() ? nullptr :
-                       std::make_shared<BumpTexture>((mat_pth + bump_map_name).c_str())) {}
+                       std::make_shared<BumpTexture>((mat_pth + bump_map_name).c_str(),
+                                                     bump_map_type)) {}
 
     bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override { return false; }
 

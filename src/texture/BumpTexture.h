@@ -12,7 +12,8 @@ public:
 
     BumpTexture() = default;
 
-    explicit BumpTexture(const char *filename, double _bump_scale = 0.01, int clamp_type = 1) {
+    explicit BumpTexture(const char *filename, int _bump_map_type, double _bump_scale = 0.01,
+                         int clamp_type = 1) {
         // load image using stb image
         auto components_per_pixel = bytes_per_pixel;
         data = stbi_load(filename, &width, &height, &components_per_pixel, components_per_pixel);
@@ -27,6 +28,7 @@ public:
         bytes_per_scanline = bytes_per_pixel * width;
         uv_clamp_type = clamp_type;
         bump_scale = _bump_scale;
+        bump_map_type = _bump_map_type;
     }
 
     ~BumpTexture() { delete[] data; }
@@ -52,17 +54,23 @@ public:
         i = i >= width ? width - 1 : i;
         j = j >= height ? height - 1 : j;
 
-        // calculate adjacent coordinates
-        int ip1 = i + 1 == width ? 0 : i + 1;
-        int im1 = i - 1 == -1 ? width - 1 : i - 1;
-        int jp1 = j + 1 == height ? 0 : j + 1;
-        int jm1 = j - 1 == -1 ? height - 1 : j - 1;
+        // return based on type
+        if (bump_map_type == 0) {
+            // calculate adjacent coordinates
+            int ip1 = i + 1 == width ? 0 : i + 1;
+            int im1 = i - 1 == -1 ? width - 1 : i - 1;
+            int jp1 = j + 1 == height ? 0 : j + 1;
+            int jm1 = j - 1 == -1 ? height - 1 : j - 1;
 
-        // calculate normal
-        Vector3d normal = Vector3d(-bump_scale * (h(ip1, j) - h(im1, j)),
-                                   -bump_scale * (h(i, jp1) - h(i, jm1)),
-                                   1);
-        return normalize(normal);
+            // calculate normal
+            Vector3d normal = Vector3d(-bump_scale * (h(ip1, j) - h(im1, j)),
+                                       -bump_scale * (h(i, jp1) - h(i, jm1)),
+                                       1);
+            return normalize(normal);
+        } else if (bump_map_type == 1) {
+            auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
+            return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
+        }
     }
 
 private:
@@ -71,6 +79,7 @@ private:
     int bytes_per_scanline{0};
     int uv_clamp_type{-1};  // 0: clamp 1: mod
     double bump_scale{0.01};
+    int bump_map_type{-1};  // 0: height, 1: normal
 
     inline int h(int i, int j) {
         return (data + j * bytes_per_scanline + i * bytes_per_pixel)[0];
