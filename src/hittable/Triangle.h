@@ -33,29 +33,7 @@ public:
             use_computed_normal = true;
         }
         // calculate uv to xyz map
-        // 1 wrt 0
-        double a1 = vertices[1]->u - vertices[0]->u;
-        double a2 = vertices[1]->v - vertices[0]->v;
-        Vector3d a_xyz = vertices[1]->point - vertices[0]->point;
-        // 2 wrt 0
-        double b1 = vertices[2]->u - vertices[0]->u;
-        double b2 = vertices[2]->v - vertices[0]->v;
-        Vector3d b_xyz = vertices[2]->point - vertices[0]->point;
-        // denominator
-        double denominator = a1 * b2 - a2 * b1;
-        if (denominator == 0) {
-            if (a1 == 0 && a2 == 0 && b1 == 0 && b2 == 0) return;
-            std::cerr << "Failed to map uv to xyz" << std::endl;
-            return;
-        }
-        // calculate for u
-        double ux = b2 / denominator;
-        double uy = -a2 / denominator;
-        u_vec = ux * a_xyz + uy * b_xyz;
-        // calculate for v
-        double vx = -b1 / denominator;
-        double vy = a1 / denominator;
-        v_vec = vx * a_xyz + vy * b_xyz;
+        map_uv_2_xyz();
     }
 
     bool hit(const Ray &ray, double t_min, double t_max, Hit &hit) const override {
@@ -169,6 +147,75 @@ private:
         barycentric(p, a, b, c);
         u = a * vertices[0]->u + b * vertices[1]->u + c * vertices[2]->u;
         v = a * vertices[0]->v + b * vertices[1]->v + c * vertices[2]->v;
+    }
+
+    inline void map_uv_2_xyz() {
+        // 1 wrt 0
+        double a1 = vertices[1]->u - vertices[0]->u;
+        double a2 = vertices[1]->v - vertices[0]->v;
+        Vector3d a_xyz = vertices[1]->point - vertices[0]->point;
+        // 2 wrt 0
+        double b1 = vertices[2]->u - vertices[0]->u;
+        double b2 = vertices[2]->v - vertices[0]->v;
+        Vector3d b_xyz = vertices[2]->point - vertices[0]->point;
+        // denominator and check for degradation
+        double denominator = a1 * b2 - a2 * b1;
+        if (fabs(denominator) < EPSILON) {
+            bool recover_flag = true;
+            // no uv coordinate case
+            if (a1 == 0 && a2 == 0 && b1 == 0 && b2 == 0) return;
+            // u degradation
+            if (vertices[0]->u == vertices[1]->u && vertices[0]->u == vertices[2]->u) {
+                double v_min = min3(vertices[0]->v, vertices[1]->v, vertices[2]->v);
+                double v_max = max3(vertices[0]->v, vertices[1]->v, vertices[2]->v);
+                if (v_min == v_max) recover_flag = false;
+                else {
+                    // we can still recover v in this case
+                    int max_id = v_max == vertices[0]->v ? 0
+                                                         : v_max == vertices[1]->v ? 1 : 2;
+                    int min_id = v_min == vertices[0]->v ? 0
+                                                         : v_min == vertices[1]->v ? 1 : 2;
+                    double v_scale = 1 / (v_max - v_min);
+                    v_vec = (vertices[max_id]->point - vertices[min_id]->point) * v_scale;
+                    u_vec = Vector3d();
+                    return;
+                }
+            }
+            // v degradation
+            if (vertices[0]->v == vertices[1]->v && vertices[0]->v == vertices[2]->v) {
+                double u_min = min3(vertices[0]->u, vertices[1]->u, vertices[2]->u);
+                double u_max = max3(vertices[0]->u, vertices[1]->u, vertices[2]->u);
+                if (u_min == u_max) recover_flag = false;
+                else {
+                    // we can still recover u in this case
+                    int max_id = u_max == vertices[0]->u ? 0
+                                                         : u_max == vertices[1]->u ? 1 : 2;
+                    int min_id = u_min == vertices[0]->u ? 0
+                                                         : u_min == vertices[1]->u ? 1 : 2;
+                    double u_scale = 1 / (u_max - u_min);
+                    v_vec = Vector3d();
+                    u_vec = (vertices[max_id]->point - vertices[min_id]->point) * u_scale;
+                    return;
+                }
+            }
+            // unable to recover and log
+            std::cerr << "Failed to map uv to xyz" << std::endl;
+            if (random_double() < 1) {
+                std::cerr << vertices[0]->u << "     " << vertices[0]->v << std::endl;
+                std::cerr << vertices[1]->u << "     " << vertices[1]->v << std::endl;
+                std::cerr << vertices[1]->u << "     " << vertices[1]->v << std::endl;
+                std::cerr << std::endl;
+            }
+            return;
+        }
+        // calculate for u
+        double ux = b2 / denominator;
+        double uy = -a2 / denominator;
+        u_vec = ux * a_xyz + uy * b_xyz;
+        // calculate for v
+        double vx = -b1 / denominator;
+        double vy = a1 / denominator;
+        v_vec = vx * a_xyz + vy * b_xyz;
     }
 
     static inline double min3(const double &a, const double &b, const double &c) {
