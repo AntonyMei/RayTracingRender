@@ -59,9 +59,10 @@ public:
         int jm1 = j - 1 == -1 ? height - 1 : j - 1;
 
         // calculate normal
-        Vector3d s_ij = Vector3d(1, 0, bump_scale * (h(ip1, j) - h(im1, j)));
-        Vector3d t_ij = Vector3d(0, 1, bump_scale * (h(i, jp1) - h(i, jm1)));
-        return normalize(cross(s_ij, t_ij));
+        Vector3d normal = Vector3d(-bump_scale * (h(ip1, j) - h(im1, j)),
+                                   -bump_scale * (h(i, jp1) - h(i, jm1)),
+                                   1);
+        return normalize(normal);
     }
 
 private:
