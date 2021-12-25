@@ -26,11 +26,36 @@ public:
             : Hittable(std::move(m)), bump_ptr(std::move(b)),
               normal(normalize(cross(v1->point - v0->point, v2->point - v0->point))),
               vertices{std::move(v0), std::move(v1), std::move(v2)} {
+        // calculate normal
         if (vertices[0]->normal.length() <= EPSILON &&
             vertices[1]->normal.length() <= EPSILON &&
             vertices[2]->normal.length() <= EPSILON) {
             use_computed_normal = true;
         }
+        // calculate uv to xyz map
+        // 1 wrt 0
+        double a1 = vertices[1]->u - vertices[0]->u;
+        double a2 = vertices[1]->v - vertices[0]->v;
+        Vector3d a_xyz = vertices[1]->point - vertices[0]->point;
+        // 2 wrt 0
+        double b1 = vertices[2]->u - vertices[0]->u;
+        double b2 = vertices[2]->v - vertices[0]->v;
+        Vector3d b_xyz = vertices[2]->point - vertices[0]->point;
+        // denominator
+        double denominator = a1 * b2 - a2 * b1;
+        if (denominator == 0) {
+            if (a1 == 0 && a2 == 0 && b1 == 0 && b2 == 0) return;
+            std::cerr << "Failed to map uv to xyz" << std::endl;
+            return;
+        }
+        // calculate for u
+        double ux = b2 / denominator;
+        double uy = -a2 / denominator;
+        u_vec = ux * a_xyz + uy * b_xyz;
+        // calculate for v
+        double vx = -b1 / denominator;
+        double vy = a1 / denominator;
+        v_vec = vx * a_xyz + vy * b_xyz;
     }
 
     bool hit(const Ray &ray, double t_min, double t_max, Hit &hit) const override {
@@ -53,6 +78,7 @@ public:
         if (v < 0.0 || u + v > 1.0) return false;
 
         // At this stage we can compute t to find out where the intersection point is on the line.
+        // basic hit information
         double t = f * dot(edge2, q);
         if (t < t_min || t > t_max) return false;
         hit.t = t;
@@ -67,15 +93,14 @@ public:
                                    w2 * vertices[2]->normal);
         else
             hit.normal = normal;
-        // set bump
+        // add bump map when available
         if (bump_ptr) {
             // get perturbation
             auto perturb0 = bump_ptr->get_normal(vertices[0]->u, vertices[0]->v);
             auto perturb1 = bump_ptr->get_normal(vertices[1]->u, vertices[1]->v);
             auto perturb2 = bump_ptr->get_normal(vertices[2]->u, vertices[2]->v);
             auto perturb = w0 * perturb0 + w1 * perturb1 + w2 * perturb2;
-            perturb -= dot(perturb, hit.normal) * hit.normal;
-            hit.normal = normalize(hit.normal + perturb);
+            hit.normal = normalize(hit.normal + perturb[0] * u_vec + perturb[1] * v_vec);
         }
         hit.set_face_normal(ray, normal);
         // set u v
@@ -118,6 +143,8 @@ private:
     Vector3d normal;
     std::shared_ptr<Vertex> vertices[3];
     std::shared_ptr<BumpMaterial> bump_ptr;
+    // unit vector of u, v in xyz space
+    Vector3d u_vec, v_vec;
 
     inline void barycentric(const Point &p, double &u, double &v, double &w) const {
         // Compute barycentric coordinates (u, v, w) for
