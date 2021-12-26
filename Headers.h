@@ -113,5 +113,6 @@
 #include "src/scenes/TestObj.h"
 #include "src/scenes/Sponza.h"
 #include "src/scenes/TestTriangle.h"
+#include "src/scenes/SponzaCrytek.h"
 
 #endif //PROJECT_HEADERS_H
