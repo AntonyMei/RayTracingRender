@@ -20,10 +20,10 @@ HittableList sponza_crytek_scene() {
 
 SimpleCamera sponza_crytek_camera(double aspect_ratio) {
     // basic settings
-    // 5 10 5 -> 0 0 0
-    // 2 1 -2 -> -5 2 1
-    Point camera_position(-5, 1, 2);
-    Point view_point(5, 3, -1);
+//    Point camera_position(-5, 1, 2);
+//    Point view_point(5, 3, -1);
+    Point camera_position(-350, 80, 150);
+    Point view_point(0, 170, 0);
     Vector3d camera_up(0, 1, 0);
     // fov
     auto vertical_fov = 70.0;
