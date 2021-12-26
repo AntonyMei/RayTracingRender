@@ -56,6 +56,7 @@ public:
 
         // return based on type
         if (bump_map_type == 0) {
+            // height map
             // calculate adjacent coordinates
             int ip1 = i + 1 == width ? 0 : i + 1;
             int im1 = i - 1 == -1 ? width - 1 : i - 1;
@@ -68,8 +69,29 @@ public:
                                        1);
             return normal;
         } else if (bump_map_type == 1) {
+            // normal map
             auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
             return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
+        } else if (bump_map_type == 2) {
+            // auto type detection
+            auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
+            if (pixel[0] == pixel[1] && pixel[0] == pixel[2]) {
+                // height map
+                // calculate adjacent coordinates
+                int ip1 = i + 1 == width ? 0 : i + 1;
+                int im1 = i - 1 == -1 ? width - 1 : i - 1;
+                int jp1 = j + 1 == height ? 0 : j + 1;
+                int jm1 = j - 1 == -1 ? height - 1 : j - 1;
+
+                // calculate normal
+                Vector3d normal = Vector3d(-bump_scale * (h(ip1, j) - h(im1, j)),
+                                           -bump_scale * (h(i, jp1) - h(i, jm1)),
+                                           1);
+                return normal;
+            } else {
+                // normal map
+                return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
+            }
         } else {
             std::cerr << "Unknown bump map type" << std::endl;
             return {0, 0, 1};
@@ -82,7 +104,7 @@ private:
     int bytes_per_scanline{0};
     int uv_clamp_type{-1};  // 0: clamp 1: mod
     double bump_scale{0.01};
-    int bump_map_type{-1};  // 0: height, 1: normal
+    int bump_map_type{-1};  // 0: height, 1: normal, 2: auto
 
     inline int h(int i, int j) {
         return (data + j * bytes_per_scanline + i * bytes_per_pixel)[0];
