@@ -14,6 +14,7 @@ struct Hit {
     double v{0};
     bool front_face{false};
     int scatter_mode{-1};
+    int remaining_bounce{-1};
 
     inline void set_face_normal(const Ray &r, const Vector3d &n) {
         front_face = (dot(r.direction(), n) < 0);

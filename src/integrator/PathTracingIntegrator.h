@@ -17,6 +17,7 @@ public:
 
         // If we've exceeded the ray bounce limit, no more light is gathered.
         if (remaining_bounce <= 0) return {0, 0, 0};
+        hit.remaining_bounce = remaining_bounce;
 
         // If hit nothing, return background
         if (!world.hit(r, TMIN, inf, hit)) return skybox.get_color(r);
