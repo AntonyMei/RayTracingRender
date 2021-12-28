@@ -10,8 +10,8 @@ class Ray {
 public:
     Ray() : o(), d(), tm{} {}
 
-    Ray(const Point &origin, const Vector3d &direction, double time = 0.0) :
-            o(origin), d(direction), tm(time) {}
+    Ray(const Point &origin, const Vector3d &direction, double time = 0.0, bool _is_camera_ray = false) :
+            o(origin), d(direction), tm(time), is_camera_ray(_is_camera_ray) {}
 
     // utils
     Point origin() const { return o; }
@@ -20,6 +20,8 @@ public:
 
     double time() const { return tm; }
 
+    bool camera_ray() const { return is_camera_ray; }
+
     Point at(double t) const { return o + t * d; }
 
 private:
@@ -27,6 +29,7 @@ private:
     Point o;
     Vector3d d;
     double tm;
+    bool is_camera_ray{false};
 };
 
 

@@ -43,7 +43,7 @@ public:
 
         return {origin + offset,
                 lower_left_corner + s * horizontal + t * vertical - origin - offset,
-                random_double(time0, time1)};
+                random_double(time0, time1), true};
     }
 
     double shutter_open() const { return time0; }

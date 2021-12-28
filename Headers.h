@@ -92,6 +92,7 @@
 #include "src/skybox/SimpleSkybox.h"
 #include "src/skybox/ConstantSkybox.h"
 #include "src/skybox/DirectionalSkybox.h"
+#include "src/skybox/TwoLayerSkybox.h"
 // integrator
 #include "src/integrator/PathTracingIntegrator.h"
 // medium

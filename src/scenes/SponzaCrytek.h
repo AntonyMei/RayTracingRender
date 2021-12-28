@@ -38,9 +38,18 @@ SimpleCamera sponza_crytek_camera(double aspect_ratio) {
             aperture, dist_to_focus, shutter_open, shutter_close};
 }
 
-DirectionalSkybox sponza_crytek_skybox() {
-    // 1, 5 for sponza
-    return {1, 12, normalize(Vector3d(1, 20, 2)), 0.8};
+TwoLayerSkybox sponza_crytek_skybox_cloudy() {
+    return {std::make_shared<SimpleSkybox>(),
+            std::make_shared<DirectionalSkybox>(1, 12,
+                                                normalize(Vector3d(1, 20, 2)),
+                                                0.8)};
+}
+
+TwoLayerSkybox sponza_crytek_skybox_sunny() {
+    return {std::make_shared<SimpleSkybox>(),
+            std::make_shared<DirectionalSkybox>(0, 15,
+                                                normalize(Vector3d(1, 15, 2)),
+                                                0.9)};
 }
 
 #endif //PROJECT_SPONZACRYTEK_H

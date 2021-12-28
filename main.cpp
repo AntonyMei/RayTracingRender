@@ -39,7 +39,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     // 2. use global_light_skybox if no other lights enabled
     HittableList world = sponza_crytek_scene();
     SimpleCamera cam = sponza_crytek_camera(aspect_ratio);
-    auto skybox = sponza_crytek_skybox();
+    auto skybox = sponza_crytek_skybox_sunny();
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
     // multiprocessing related (id = 0 - max_processes - 1)
