@@ -45,7 +45,7 @@ public:
             if (hit.remaining_bounce == 1) {
                 // sample to light direction at last bounce
                 // get scatter direction
-                auto scatter_direction = sun_dir + 0.02 * random_in_unit_sphere();
+                auto scatter_direction = sun_dir;
                 if (dot(scatter_direction, hit.normal) <= 0)
                     scatter_direction = hit.normal + random_unit_vector();
                 if (scatter_direction.near_zero())

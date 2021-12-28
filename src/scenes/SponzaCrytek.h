@@ -12,8 +12,7 @@ HittableList sponza_crytek_scene() {
     auto obj_name = model_pth() + "sponza_crytek/sponza.obj";
     auto mtl_path = model_pth() + "sponza_crytek/";
     auto parser = ObjectParser(obj_name, mtl_path);
-    objects.add(parser.parse(2, 0,
-                             normalize(Vector3d(1, 20, 2))));
+    objects.add(parser.parse(2));
 
     return objects;
 }
@@ -47,9 +46,9 @@ TwoLayerSkybox sponza_crytek_skybox_cloudy() {
 
 TwoLayerSkybox sponza_crytek_skybox_sunny() {
     return {std::make_shared<SimpleSkybox>(),
-            std::make_shared<DirectionalSkybox>(0, 15,
-                                                normalize(Vector3d(1, 15, 2)),
-                                                0.9)};
+            std::make_shared<DirectionalSkybox>(0.02, 80,
+                                                normalize(Vector3d(0, 5, 1)),
+                                                0.95)};
 }
 
 #endif //PROJECT_SPONZACRYTEK_H
