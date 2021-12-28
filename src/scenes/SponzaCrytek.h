@@ -45,8 +45,8 @@ TwoLayerSkybox sponza_crytek_skybox_cloudy() {
 }
 
 TwoLayerSkybox sponza_crytek_skybox_sunny() {
-    return {std::make_shared<SimpleSkybox>(),
-            std::make_shared<DirectionalSkybox>(0.02, 80,
+    return {std::make_shared<SimpleSkybox>(1),
+            std::make_shared<DirectionalSkybox>(0, 100,
                                                 normalize(Vector3d(0, 5, 1)),
                                                 0.95)};
 }
