@@ -22,7 +22,7 @@ public:
                            * cast_ray(scattered_ray, remaining_bounce - 1);
                 } else {
                     // diffuse -> query photon map
-                    auto color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.3, 100);
+                    auto color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.1, 50);
                     return emit_color + color;
                 }
             } else {
