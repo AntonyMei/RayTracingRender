@@ -46,11 +46,11 @@ HittableList PM_test_scene() {
 
 SimpleCamera PM_test_camera(double aspect_ratio) {
     // basic settings
-    Point camera_position(-5, 1, 2);
-    Point view_point(5, 3, -1);
+    Point camera_position(2.775, 2.775, 0);
+    Point view_point(2.775, 2.775, 1);
     Vector3d camera_up(0, 1, 0);
     // fov
-    auto vertical_fov = 70.0;
+    auto vertical_fov = 90.0;
     // off focus blur
     auto dist_to_focus = 10.0;
     auto aperture = 0.0;
