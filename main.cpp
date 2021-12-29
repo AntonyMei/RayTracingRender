@@ -1,6 +1,6 @@
 //
 // Created by meiyixuan on 2021-12-09.
-// This is dev branch.
+// This is RayTracer4.0, add bump map, new skyboxes and new scenes
 //
 #include "Headers.h"
 
