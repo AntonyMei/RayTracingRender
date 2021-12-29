@@ -84,11 +84,15 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
         Vector3d origin, direction, power = Vector3d(27, 27, 27);
         double power_scale;
         while (photon_map->get_photon_num() < 250000) {
+            if (photon_map->get_photon_num() % 10000 == 0)
+                std::cerr << "Finished " << photon_map->get_photon_num() << " photons." << std::endl;
             light->generate_photon(origin, direction, power_scale);
             Ray ray(origin, direction);
             integrator.trace_photon(ray, 10, power_scale * power);
         }
         while (photon_map->get_photon_num() < 300000) {
+            if (photon_map->get_photon_num() % 10000 == 0)
+                std::cerr << "Finished " << photon_map->get_photon_num() << " photons." << std::endl;
             light->generate_photon(origin, direction, power_scale);
             Ray ray(origin, direction);
             integrator.trace_photon_caustic(ray, 10, power_scale * power);
