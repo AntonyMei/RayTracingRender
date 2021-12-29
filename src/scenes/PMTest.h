@@ -38,7 +38,8 @@ HittableList PM_test_scene() {
     // bunny
     auto obj_name = model_pth() + "bunny/bunny.obj";
     auto parser = ObjectParser(obj_name, "");
-    objects.add(std::make_shared<Translate>(parser.parse(),
+    objects.add(std::make_shared<Translate>(parser.parse(0, 0,
+                                                         Vector3d(), bunny_mat),
                                             Vector3d(1, 0, 1)));
 
     return objects;

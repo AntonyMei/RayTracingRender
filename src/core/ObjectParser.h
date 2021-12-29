@@ -14,8 +14,10 @@ public:
     explicit ObjectParser(std::string _filename, std::string _mtl_path)
             : filename(std::move(_filename)), mtl_path(std::move(_mtl_path)) {}
 
-    std::shared_ptr<BVHNode> parse(int bump_map_type=0, double light_sample_probability = 0,
-                                   Vector3d sun_dir = Vector3d()) {
+    std::shared_ptr<BVHNode> parse(int bump_map_type = 0, double light_sample_probability = 0,
+                                   Vector3d sun_dir = Vector3d(),
+                                   const std::shared_ptr<Material> &default_material
+                                   = std::make_shared<Lambertian>(1, 1, 1)) {
         // create reader
         tinyobj::ObjReaderConfig reader_config;
         reader_config.mtl_search_path = mtl_path; // Path to material files
@@ -118,8 +120,9 @@ public:
 
                 // per-face material (set to Lambertian for debug)
                 // shape.mesh.material_ids[f];
-                auto mat_ptr = mat_list[shape.mesh.material_ids[f]];
-                auto bump_ptr = bump_list[shape.mesh.material_ids[f]];
+                auto mat_id = shape.mesh.material_ids[f];
+                auto mat_ptr = mat_id == -1 ? default_material : mat_list[mat_id];
+                auto bump_ptr = mat_id == -1 ? nullptr : bump_list[shape.mesh.material_ids[f]];
 
                 // create triangle
                 auto triangle_ptr = std::make_shared<Triangle>(vertex_list[0], vertex_list[1],
