@@ -33,23 +33,23 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
         image.push_back(std::move(row));
     }
 
-    // World, camera and skybox
-    // 1. Note that motion blur objects should be created with 0.0 - 1.0.
-    //    Control motion blur with camera's shutter.
-    // 2. use global_light_skybox if no other lights enabled
-    HittableList world = PM_test_scene();
-    SimpleCamera cam = PM_test_camera(aspect_ratio);
-    auto skybox = PM_test_skybox();
-    bool use_photon_mapping = PM_test_integrator();
-    BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
-
     // multiprocessing related (id = 0 - max_processes - 1)
     int work_load = image_height / max_processes;
     int start_row = image_height - 1 - work_load * current_id;
     int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
 
     // Render
-    if (!use_photon_mapping) {
+    int integrator_type = use_photon_map(); // first specify this 0 / 1
+    if (integrator_type == 0) {
+        // World, camera and skybox
+        // 1. Note that motion blur objects should be created with 0.0 - 1.0.
+        //    Control motion blur with camera's shutter.
+        // 2. use global_light_skybox if no other lights enabled
+        HittableList world = sponza_crytek_scene();
+        SimpleCamera cam = sponza_crytek_camera(aspect_ratio);
+        auto skybox = sponza_crytek_skybox_cloudy();
+        BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
+
         PathTracingIntegrator integrator(world_bvh, skybox);
         for (int j = start_row; j > end_row; --j) {
             std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
@@ -67,8 +67,17 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
             auto end = time(nullptr);
             std::cerr << "loop time " << end - start << "s\n" << std::flush;
         }
-    } else {
+    } else if (integrator_type == 1) {
+        // World, camera and skybox
+        HittableList world = PM_test_scene();
+        auto light = PM_test_light();
+        world.add(light);
+        SimpleCamera cam = PM_test_camera(aspect_ratio);
+        auto skybox = PM_test_skybox();
+        BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
+        // photon map and integrator
+        auto photon_map = std::make_shared<PhotonMap>();
     }
 
     // output

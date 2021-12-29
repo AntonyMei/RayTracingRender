@@ -24,6 +24,11 @@ int u_degrade_triangles = 0;
 int v_degrade_triangles = 0;
 int unrecoverable_triangles = 0;
 
+// integrator
+int use_photon_map() { return 1; }
+
+int use_path_tracing() { return 0; }
+
 // math
 using std::sqrt;
 const double inf = std::numeric_limits<double>::infinity();

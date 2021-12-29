@@ -8,12 +8,6 @@
 HittableList PM_test_scene() {
     HittableList objects;
 
-    // light
-    auto light_mat = std::make_shared<DiffuseLight>(std::make_shared<ColorTexture>(1, 1, 1),
-                                                    27);
-    auto light = std::make_shared<YZRectangleLight>(1.13, 2.43, 2.27, 3.32, 0, light_mat);
-    objects.add(light);
-
     // wall materials
     auto red = std::make_shared<Lambertian>(std::make_shared<ColorTexture>(0.45, 0.05, 0.05));
     auto white = std::make_shared<Lambertian>(std::make_shared<ColorTexture>(0.53, 0.53, 0.53));
@@ -45,6 +39,14 @@ HittableList PM_test_scene() {
     return objects;
 }
 
+std::shared_ptr<Hittable> PM_test_light() {
+    // light
+    auto light_mat = std::make_shared<DiffuseLight>(std::make_shared<ColorTexture>(1, 1, 1),
+                                                    27);
+    auto light = std::make_shared<YZRectangleLight>(1.13, 2.43, 2.27, 3.32, 0, light_mat);
+    return light;
+}
+
 SimpleCamera PM_test_camera(double aspect_ratio) {
     // basic settings
     Point camera_position(2.775, 2.775, -3);
@@ -64,7 +66,5 @@ SimpleCamera PM_test_camera(double aspect_ratio) {
 }
 
 ConstantSkybox PM_test_skybox() { return {}; }
-
-bool PM_test_integrator() { return true; }
 
 #endif //PROJECT_PMTEST_H
