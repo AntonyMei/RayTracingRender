@@ -94,6 +94,65 @@ public:
         }
     }
 
+    void get_nearest_photons(const std::shared_ptr<NearestPhotons> &nearest_photons, int index) {
+        if (index > photon_num) return;
+        auto photon = photon_list[index];
+        if (index * 2 <= photon_num) {
+            double dist = nearest_photons->pos[photon->axis] - photon->position[photon->axis];
+            if (dist < 0) {
+                get_nearest_photons(nearest_photons, index * 2);
+                if (dist * dist < nearest_photons->dist_square[0])
+                    get_nearest_photons(nearest_photons, index * 2 + 1);
+            } else {
+                get_nearest_photons(nearest_photons, index * 2 + 1);
+                if (dist * dist < nearest_photons->dist_square[0])
+                    get_nearest_photons(nearest_photons, index * 2);
+            }
+        }
+        double dist_square = (photon->position - nearest_photons->pos).squared_length();
+        if (dist_square > nearest_photons->dist_square[0]) return;
+        if (nearest_photons->found_photons < nearest_photons->max_photons) {
+            nearest_photons->found_photons++;
+            nearest_photons->dist_square[nearest_photons->found_photons] = dist_square;
+            nearest_photons->photons[nearest_photons->found_photons] = photon;
+        } else {
+            if (!nearest_photons->heap_full) {
+                for (int i = nearest_photons->found_photons >> 1; i >= 1; --i) {
+                    int par = i;
+                    auto temp_photon = nearest_photons->photons[i];
+                    double temp_dist_square = nearest_photons->dist_square[i];
+                    while ((par << 1) <= nearest_photons->found_photons) {
+                        int j = par << 1;
+                        if (j + 1 <= nearest_photons->found_photons
+                            && nearest_photons->dist_square[j] < nearest_photons->dist_square[j + 1])
+                            j++;
+                        if (temp_dist_square >= nearest_photons->dist_square[j]) break;
+                        nearest_photons->photons[par] = nearest_photons->photons[j];
+                        nearest_photons->dist_square[par] = nearest_photons->dist_square[j];
+                        par = j;
+                    }
+                    nearest_photons->photons[par] = temp_photon;
+                    nearest_photons->dist_square[par] = temp_dist_square;
+                }
+                nearest_photons->heap_full = true;
+            }
+            int par = 1;
+            while ((par << 1) <= nearest_photons->found_photons) {
+                int j = par << 1;
+                if (j + 1 <= nearest_photons->found_photons
+                    && nearest_photons->dist_square[j] < nearest_photons->dist_square[j + 1])
+                    j++;
+                if (dist_square >= nearest_photons->dist_square[j]) break;
+                nearest_photons->photons[par] = nearest_photons->photons[j];
+                nearest_photons->dist_square[par] = nearest_photons->dist_square[j];
+                par = j;
+            }
+            nearest_photons->photons[par] = photon;
+            nearest_photons->dist_square[par] = dist_square;
+            nearest_photons->dist_square[0] = nearest_photons->dist_square[1];
+        }
+    }
+
 private:
     int photon_num;
     int max_photon_num;
