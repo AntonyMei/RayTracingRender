@@ -88,6 +88,24 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
             Ray ray(origin, direction);
             integrator.trace_photon(ray, 10, power_scale * power);
         }
+
+        // render
+        for (int j = start_row; j > end_row; --j) {
+            std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
+            auto start = time(nullptr);
+            for (int i = 0; i < image_width; ++i) {
+                Color pixel_color(0, 0, 0);
+                for (int s = 0; s < samples_per_pixel; ++s) {
+                    auto u = (i + random_double()) / (image_width - 1);
+                    auto v = (j + random_double()) / (image_height - 1);
+                    Ray r = cam.get_ray(u, v);
+                    pixel_color += integrator.cast_ray(r, max_depth);
+                }
+                image[j][i].set(pixel_color, samples_per_pixel);
+            }
+            auto end = time(nullptr);
+            std::cerr << "loop time " << end - start << "s\n" << std::flush;
+        }
     }
 
     // output
