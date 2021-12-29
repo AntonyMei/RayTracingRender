@@ -22,7 +22,7 @@ public:
                            * cast_ray(scattered_ray, remaining_bounce - 1);
                 } else {
                     // diffuse -> query photon map
-                    auto color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.6, 100);
+                    auto color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.3, 400);
                     return emit_color + color;
                 }
             } else {
@@ -41,6 +41,21 @@ public:
                 if (hit.scatter_mode == 1) {
                     trace_photon(scattered_ray, remaining_bounce - 1, power);
                 } else {
+                    photon_map->store(Photon(hit.hit_point, ray.direction(), power));
+                }
+            }
+        }
+    }
+
+    void trace_photon_caustic(const Ray &ray, int remaining_bounce, Vector3d power) {
+        Hit hit;
+        if (world.hit(ray, TMIN, inf, hit)) {
+            Ray scattered_ray;
+            if (remaining_bounce > 0 && hit.mat_ptr->scatter(ray, hit, scattered_ray)) {
+                if (hit.scatter_mode == 1) {
+                    trace_photon(scattered_ray, remaining_bounce - 1, power);
+                } else {
+                    if (remaining_bounce == 10) return;
                     photon_map->store(Photon(hit.hit_point, ray.direction(), power));
                 }
             }

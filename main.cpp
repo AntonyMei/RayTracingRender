@@ -77,16 +77,21 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
         BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
         // photon map and integrator
-        auto photon_map = std::make_shared<PhotonMap>(100000);
+        auto photon_map = std::make_shared<PhotonMap>(300000);
         auto integrator = PhotonMappingIntegrator(world, skybox, photon_map);
 
         // generate photon map
         Vector3d origin, direction, power = Vector3d(27, 27, 27);
         double power_scale;
-        for (int i = 0; i < 100000; ++i) {
+        while (photon_map->get_photon_num() < 250000) {
             light->generate_photon(origin, direction, power_scale);
             Ray ray(origin, direction);
             integrator.trace_photon(ray, 10, power_scale * power);
+        }
+        while (photon_map->get_photon_num() < 300000) {
+            light->generate_photon(origin, direction, power_scale);
+            Ray ray(origin, direction);
+            integrator.trace_photon_caustic(ray, 10, power_scale * power);
         }
         photon_map->balance();
 

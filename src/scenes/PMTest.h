@@ -35,7 +35,7 @@ HittableList PM_test_scene() {
     auto parser = ObjectParser(obj_name, "");
     objects.add(std::make_shared<Translate>(parser.parse(0, 0,
                                                          Vector3d(), bunny_mat),
-                                            Vector3d(1.8, 0, 2)));
+                                            Vector3d(1.8, 0.2, 2)));
 
     return objects;
 }

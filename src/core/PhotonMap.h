@@ -164,14 +164,18 @@ public:
         np.photons = new Photon *[N + 1];
         np.dist_square[0] = max_dist * max_dist;
         get_nearest_photons(&np, 1);
-        if (np.found_photons <= 8) return ret;
+        if (np.found_photons <= 10) return ret;
         for (int i = 1; i <= np.found_photons; ++i) {
             auto dir = np.photons[i]->direction;
-            if (dot(norm, dir) < 0) ret = ret + np.photons[i]->power;
+            // filtering
+            double filter = 1.0 - (pos - np.photons[i]->position).length() / (1.1 * max_dist);
+            if (dot(norm, dir) < 0) ret = ret + np.photons[i]->power * filter;
         }
         ret = ret * (1.0 / (10000 * pi * np.dist_square[0]));
         return ret;
     }
+
+    int get_photon_num() const { return photon_num; }
 
 private:
     int photon_num;
