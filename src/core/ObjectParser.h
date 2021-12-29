@@ -17,7 +17,7 @@ public:
     std::shared_ptr<BVHNode> parse(int bump_map_type = 0, double light_sample_probability = 0,
                                    Vector3d sun_dir = Vector3d(),
                                    const std::shared_ptr<Material> &default_material
-                                   = std::make_shared<Lambertian>(1, 1, 1)) {
+                                   = std::make_shared<Lambertian>(Color(1, 1, 1))) {
         // create reader
         tinyobj::ObjReaderConfig reader_config;
         reader_config.mtl_search_path = mtl_path; // Path to material files
