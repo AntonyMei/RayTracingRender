@@ -88,6 +88,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
             Ray ray(origin, direction);
             integrator.trace_photon(ray, 10, power_scale * power);
         }
+        photon_map->balance();
 
         // render
         for (int j = start_row; j > end_row; --j) {

@@ -41,7 +41,7 @@ public:
                 if (hit.scatter_mode == 1) {
                     trace_photon(scattered_ray, remaining_bounce - 1, power);
                 } else {
-                    photon_map->store(std::make_shared<Photon>(hit.hit_point, ray.direction(), power));
+                    photon_map->store(Photon(hit.hit_point, ray.direction(), power));
                 }
             }
         }

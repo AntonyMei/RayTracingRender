@@ -9,7 +9,8 @@ struct Photon {
 public:
     Photon() = default;
 
-    Photon(Vector3d pos, Vector3d dir, Vector3d _power) : position(pos), direction(dir), power(_power) {}
+    Photon(Vector3d pos, Vector3d dir, Vector3d _power, int _axis = 0)
+            : position(pos), direction(dir), power(_power), axis(_axis) {}
 
 public:
     Vector3d position;

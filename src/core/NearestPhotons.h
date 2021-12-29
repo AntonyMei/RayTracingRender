@@ -11,14 +11,21 @@ public:
         max_photons = 0;
         found_photons = 0;
         heap_full = false;
+        dist_square = nullptr;
+        photons = nullptr;
+    }
+
+    ~NearestPhotons() {
+        delete[] dist_square;
+        delete[] photons;
     }
 
 public:
     Vector3d pos;
     int max_photons, found_photons;
     bool heap_full;
-    std::vector<double> dist_square;
-    std::vector<std::shared_ptr<Photon>> photons;
+    double* dist_square;
+    Photon** photons;
 };
 
 #endif //PROJECT_NEARESTPHOTONS_H
