@@ -20,6 +20,7 @@ public:
 
         // generate rays
         scattered_ray = Ray(hit.hit_point, reflected_dir, ray_in.time());
+        hit.scatter_mode = 1;
         return (dot(reflected_dir, hit.normal) > 0);
     }
 

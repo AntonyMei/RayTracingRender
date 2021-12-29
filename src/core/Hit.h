@@ -13,6 +13,7 @@ struct Hit {
     double u{0};
     double v{0};
     bool front_face{false};
+    // 0: diffuse, 1: reflect, 2: refract, 3: isotropic
     int scatter_mode{-1};
     int remaining_bounce{-1};
 

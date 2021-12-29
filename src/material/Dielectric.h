@@ -21,10 +21,14 @@ public:
         // generate new ray's direction
         bool cannot_refract = refraction_ratio * sin_theta > 1.0;
         Vector3d direction;
-        if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double())
+        if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double()) {
             direction = reflect(unit_direction, hit.normal);
-        else
+            hit.scatter_mode = 1;
+        } else {
             direction = refract(unit_direction, hit.normal, refraction_ratio);
+            hit.scatter_mode = 2;
+        }
+
 
         scattered_ray = Ray(hit.hit_point, direction, ray_in.time());
         return true;

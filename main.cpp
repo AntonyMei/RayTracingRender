@@ -40,6 +40,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     HittableList world = PM_test_scene();
     SimpleCamera cam = PM_test_camera(aspect_ratio);
     auto skybox = PM_test_skybox();
+    bool use_photon_mapping = PM_test_integrator();
     BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
     // multiprocessing related (id = 0 - max_processes - 1)
@@ -48,22 +49,26 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
 
     // Render
-    PathTracingIntegrator integrator(world_bvh, skybox);
-    for (int j = start_row; j > end_row; --j) {
-        std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
-        auto start = time(nullptr);
-        for (int i = 0; i < image_width; ++i) {
-            Color pixel_color(0, 0, 0);
-            for (int s = 0; s < samples_per_pixel; ++s) {
-                auto u = (i + random_double()) / (image_width - 1);
-                auto v = (j + random_double()) / (image_height - 1);
-                Ray r = cam.get_ray(u, v);
-                pixel_color += integrator.cast_ray(r, max_depth);
+    if (!use_photon_mapping) {
+        PathTracingIntegrator integrator(world_bvh, skybox);
+        for (int j = start_row; j > end_row; --j) {
+            std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
+            auto start = time(nullptr);
+            for (int i = 0; i < image_width; ++i) {
+                Color pixel_color(0, 0, 0);
+                for (int s = 0; s < samples_per_pixel; ++s) {
+                    auto u = (i + random_double()) / (image_width - 1);
+                    auto v = (j + random_double()) / (image_height - 1);
+                    Ray r = cam.get_ray(u, v);
+                    pixel_color += integrator.cast_ray(r, max_depth);
+                }
+                image[j][i].set(pixel_color, samples_per_pixel);
             }
-            image[j][i].set(pixel_color, samples_per_pixel);
+            auto end = time(nullptr);
+            std::cerr << "loop time " << end - start << "s\n" << std::flush;
         }
-        auto end = time(nullptr);
-        std::cerr << "loop time " << end - start << "s\n" << std::flush;
+    } else {
+
     }
 
     // output

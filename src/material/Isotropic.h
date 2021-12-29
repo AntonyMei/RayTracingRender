@@ -15,6 +15,7 @@ public:
 
     bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         scattered_ray = Ray(hit.hit_point, random_in_unit_sphere(), ray_in.time());
+        hit.scatter_mode = 3;
         return true;
     }
 

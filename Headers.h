@@ -56,6 +56,7 @@
 #include "src/core/Transform.h"
 #include "src/core/ParticipatingMedium.h"
 #include "src/core/Photon.h"
+#include "src/core/PhotonMap.h"
 
 // derived classes
 // camera
@@ -84,6 +85,7 @@
 #include "src/hittable/Box.h"
 #include "src/hittable/Triangle.h"
 #include "src/hittable/Mesh.h"
+#include "src/hittable/PhotonLight.h"
 // transform
 #include "src/transform/Translate.h"
 #include "src/transform/RotateY.h"
@@ -96,6 +98,7 @@
 #include "src/skybox/TwoLayerSkybox.h"
 // integrator
 #include "src/integrator/PathTracingIntegrator.h"
+#include "src/integrator/PhotonMappingIntegrator.h"
 // medium
 #include "src/medium/ConstantMedium.h"
 // object parser

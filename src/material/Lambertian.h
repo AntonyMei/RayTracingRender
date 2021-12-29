@@ -19,6 +19,7 @@ public:
 
         // generate scattered rays
         scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
+        hit.scatter_mode = 0;
         return true;
     }
 

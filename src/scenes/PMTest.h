@@ -11,7 +11,7 @@ HittableList PM_test_scene() {
     // light
     auto light_mat = std::make_shared<DiffuseLight>(std::make_shared<ColorTexture>(1, 1, 1),
                                                     27);
-    auto light = std::make_shared<YZRectangle>(1.13, 2.43, 2.27, 3.32, 0, light_mat);
+    auto light = std::make_shared<YZRectangleLight>(1.13, 2.43, 2.27, 3.32, 0, light_mat);
     objects.add(light);
 
     // wall materials
@@ -64,5 +64,7 @@ SimpleCamera PM_test_camera(double aspect_ratio) {
 }
 
 ConstantSkybox PM_test_skybox() { return {}; }
+
+bool PM_test_integrator() { return true; }
 
 #endif //PROJECT_PMTEST_H
