@@ -153,6 +153,24 @@ public:
         }
     }
 
+    Color get_irradiance(Vector3d pos, Vector3d norm, double max_dist, int N) {
+        Vector3d ret(0, 0, 0);
+        NearestPhotons np;
+        np.pos = pos;
+        np.max_photons = N;
+        np.dist_square = std::vector<double>(N + 1);
+        np.photons = std::vector<std::shared_ptr<Photon>>(N + 1);
+        np.dist_square[0] = max_dist * max_dist;
+        get_nearest_photons(std::make_shared<NearestPhotons>(np), 1);
+        if (np.found_photons <= 8) return ret;
+        for (int i = 1; i <= np.found_photons; ++i) {
+            auto dir = np.photons[i]->direction;
+            if (dot(norm, dir) < 0) ret = ret + np.photons[i]->power;
+        }
+        ret = ret * (1.0 / (10000 * pi * np.dist_square[0]));
+        return ret;
+    }
+
 private:
     int photon_num;
     int max_photon_num;
