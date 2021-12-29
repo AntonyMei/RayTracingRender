@@ -5,6 +5,8 @@
 #ifndef PROJECT_PHOTONLIGHT_H
 #define PROJECT_PHOTONLIGHT_H
 
+inline Vector3d random_dir(const Vector3d &n);
+
 class YZRectangleLight : public Hittable {
 public:
     YZRectangleLight() = default;
@@ -38,9 +40,9 @@ public:
         return true;
     }
 
-    void generate_photon(Vector3d& origin, Vector3d &direction, double &power) const {
-        origin = Vector3d(y0 + random_double() * (y1 - y0), x, z0 + random_double() * (z1 - z0));
-        direction = random_in_hemisphere(Vector3d(1, 0, 0));
+    void generate_photon(Vector3d &origin, Vector3d &direction, double &power) const {
+        origin = Vector3d(y0 + random_double_fixed() * (y1 - y0), x, z0 + random_double_fixed() * (z1 - z0));
+        direction = random_dir(Vector3d(1, 0, 0));
         power = dot(direction, Vector3d(1, 0, 0));
     }
 
@@ -48,5 +50,19 @@ private:
     double y0{}, y1{}, z0{}, z1{};
     double x{};
 };
+
+inline Vector3d random_dir(const Vector3d &n) {
+    Vector3d in_unit_sphere;
+    while (true) {
+        auto p = Vector3d::random_fixed(-1, 1);
+        if (p.squared_length() >= 1) continue;
+        in_unit_sphere = p;
+        break;
+    }
+    if (dot(in_unit_sphere, n) > 0.0)
+        return in_unit_sphere;
+    else
+        return -in_unit_sphere;
+}
 
 #endif //PROJECT_PHOTONLIGHT_H
