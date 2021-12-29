@@ -171,7 +171,7 @@ public:
             double filter = 1.0 - (pos - np.photons[i]->position).length() / (1.1 * max_dist);
             if (dot(norm, dir) < 0) ret = ret + np.photons[i]->power * filter;
         }
-        ret = ret * (1.0 / (1000000 * pi * np.dist_square[0]));
+        ret = ret * (1.0 / (2000000 * pi * np.dist_square[0]));
         return ret;
     }
 
