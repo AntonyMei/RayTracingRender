@@ -1,6 +1,6 @@
 //
 // Created by meiyixuan on 2021-12-09.
-// This is dev branch.
+// This is RayTracer5.0, add Photon Mapping integrator.
 //
 #include "Headers.h"
 
