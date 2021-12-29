@@ -26,7 +26,7 @@ HittableList PM_test_scene() {
     auto ceiling = std::make_shared<XZRectangle>(0, 5.55, 0, 5.55, 5.55, white);
     auto floor = std::make_shared<XZRectangle>(0, 5.55, 0, 5.55, 0, white);
     auto front = std::make_shared<XYRectangle>(0, 5.55, 0, 5.55, 5.55, white);
-    auto box = std::make_shared<Box>(Vector3d(0, 0, 0), Vector3d(0.4, 0.4, 0.4), white);
+    auto box = std::make_shared<Box>(Vector3d(0, 0, 0), Vector3d(0.6, 0.6, 0.6), white);
     objects.add(l_wall);
     objects.add(r_wall);
     objects.add(ceiling);
@@ -40,18 +40,18 @@ HittableList PM_test_scene() {
     auto parser = ObjectParser(obj_name, "");
     objects.add(std::make_shared<Translate>(parser.parse(0, 0,
                                                          Vector3d(), bunny_mat),
-                                            Vector3d(1, 0, 1)));
+                                            Vector3d(2, 1.5, 2)));
 
     return objects;
 }
 
 SimpleCamera PM_test_camera(double aspect_ratio) {
     // basic settings
-    Point camera_position(2.775, 2.775, 0);
+    Point camera_position(2.775, 2.775, -3);
     Point view_point(2.775, 2.775, 1);
     Vector3d camera_up(0, 1, 0);
     // fov
-    auto vertical_fov = 90.0;
+    auto vertical_fov = 75.0;
     // off focus blur
     auto dist_to_focus = 10.0;
     auto aperture = 0.0;
