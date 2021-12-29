@@ -25,6 +25,8 @@ int v_degrade_triangles = 0;
 int unrecoverable_triangles = 0;
 
 // integrator
+int integrator_type;
+
 int use_photon_map() { return 1; }
 
 int use_path_tracing() { return 0; }
@@ -47,19 +49,22 @@ inline double clamp(double x, double min, double max) {
 }
 
 // random
-inline double random_double() {
-    // random number in [0, 1)
-    static std::random_device rd;
-    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
-    static std::mt19937 generator(rd());
-    return distribution(generator);
-}
-
 inline double random_double_fixed() {
     // random number in [0, 1), with fixed initial seed
     // This function is thread-identical, and should be used in
     // perlin noise and random scene generation.
     return rand() / (RAND_MAX + 1.0);
+}
+
+inline double random_double() {
+    if (integrator_type == 1) {
+        return random_double_fixed();
+    }
+    // random number in [0, 1)
+    static std::random_device rd;
+    static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+    static std::mt19937 generator(rd());
+    return distribution(generator);
 }
 
 inline double random_double(double min, double max) {

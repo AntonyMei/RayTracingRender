@@ -39,7 +39,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
 
     // Render
-    int integrator_type = use_photon_map(); // first specify this 0 / 1
+    integrator_type = use_photon_map(); // first specify this 0 / 1
     if (integrator_type == 0) {
         // World, camera and skybox
         // 1. Note that motion blur objects should be created with 0.0 - 1.0.
