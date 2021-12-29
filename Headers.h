@@ -57,6 +57,8 @@
 #include "src/core/ParticipatingMedium.h"
 #include "src/core/Photon.h"
 #include "src/core/PhotonMap.h"
+#include "src/core/KdNode.h"
+#include "src/core/NearestPhotons.h"
 
 // derived classes
 // camera

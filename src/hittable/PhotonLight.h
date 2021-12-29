@@ -38,10 +38,10 @@ public:
         return true;
     }
 
-    void generate_photon(Vector3d origin, Vector3d &direction, double &power, Hit &hit) const {
+    void generate_photon(Vector3d& origin, Vector3d &direction, double &power) const {
         origin = Vector3d(y0 + random_double() * (y1 - y0), x, z0 + random_double() * (z1 - z0));
-        direction = random_in_hemisphere(hit.normal);
-        power = dot(direction, hit.normal);
+        direction = random_in_hemisphere(Vector3d(1, 0, 0));
+        power = dot(direction, Vector3d(1, 0, 0));
     }
 
 private:

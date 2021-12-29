@@ -39,7 +39,7 @@ HittableList PM_test_scene() {
     return objects;
 }
 
-std::shared_ptr<Hittable> PM_test_light() {
+std::shared_ptr<YZRectangleLight> PM_test_light() {
     // light
     auto light_mat = std::make_shared<DiffuseLight>(std::make_shared<ColorTexture>(1, 1, 1),
                                                     27);
