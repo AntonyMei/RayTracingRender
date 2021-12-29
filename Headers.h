@@ -58,7 +58,6 @@
 #include "src/core/Photon.h"
 #include "src/core/NearestPhotons.h"
 #include "src/core/PhotonMap.h"
-#include "src/core/KdNode.h"
 
 // derived classes
 // camera

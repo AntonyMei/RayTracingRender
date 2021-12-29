@@ -77,7 +77,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
         BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
         // photon map and integrator
-        auto photon_map = std::make_shared<PhotonMap>();
+        auto photon_map = std::make_shared<PhotonMap>(10000);
         auto integrator = PhotonMappingIntegrator(world, skybox, photon_map);
 
         // generate photon map

@@ -15,7 +15,7 @@ public:
     Vector3d position;
     Vector3d direction;
     Vector3d power; // in color
-    int axis;
+    int axis{0};
 };
 
 #endif //PROJECT_PHOTON_H

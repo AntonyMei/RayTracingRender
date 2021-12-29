@@ -12,6 +12,7 @@ public:
     PhotonMap() {
         max_photon_num = 10000;
         photon_num = 0;
+        photon_list = std::vector<std::shared_ptr<Photon>>(10000);
         box_min = Vector3d(10000, 10000, 10000);
         box_max = Vector3d(-10000, -10000, -10000);
     };
@@ -19,6 +20,7 @@ public:
     explicit PhotonMap(int max) {
         max_photon_num = max;
         photon_num = 0;
+        photon_list = std::vector<std::shared_ptr<Photon>>(max);
         box_min = Vector3d(10000, 10000, 10000);
         box_max = Vector3d(-10000, -10000, -10000);
     };
@@ -27,8 +29,7 @@ public:
 
     void store(const std::shared_ptr<Photon> &p) {
         if (photon_num >= max_photon_num) return;
-        photon_num += 1;
-        photon_list.push_back(p);
+        photon_list[photon_num++] = p;
         box_min = Vector3d(fmin(box_min.x(), p->position.x()),
                            fmin(box_min.y(), p->position.y()),
                            fmin(box_min.z(), p->position.z()));
@@ -45,7 +46,7 @@ public:
             int i = l - 1, j = r;
             while (true) {
                 while (temp[++i]->position[axis] < key);
-                while (temp[--j]->position[axis] < key && j > l);
+                while (temp[--j]->position[axis] > key && j > l);
                 if (i >= j) break;
                 std::swap(temp[i], temp[j]);
             }
