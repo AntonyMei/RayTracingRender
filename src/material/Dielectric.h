@@ -7,7 +7,8 @@
 
 class Dielectric : public Material {
 public:
-    explicit Dielectric(double index_of_refraction) : ir(index_of_refraction) {}
+    explicit Dielectric(double index_of_refraction, Color tf = Vector3d(1, 1, 1))
+            : ir(index_of_refraction), transmission_filter(tf) {}
 
     bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
         // calculate parameters
@@ -30,12 +31,13 @@ public:
     }
 
     Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
-        return {1.0, 1.0, 1.0};
+        return transmission_filter;
     }
 
 private:
     // eta of this material (index of refraction)
     double ir;
+    Color transmission_filter{1.0, 1.0, 1.0};
 
     static double reflectance(double cosine, double ref_idx) {
         // Use Schlick's approximation for reflectance.

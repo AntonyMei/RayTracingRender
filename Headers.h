@@ -55,6 +55,7 @@
 #include "src/core/Integrator.h"
 #include "src/core/Transform.h"
 #include "src/core/ParticipatingMedium.h"
+#include "src/core/Photon.h"
 
 // derived classes
 // camera
@@ -115,5 +116,6 @@
 #include "src/scenes/Sponza.h"
 #include "src/scenes/TestTriangle.h"
 #include "src/scenes/SponzaCrytek.h"
+#include "src/scenes/PMTest.h"
 
 #endif //PROJECT_HEADERS_H
