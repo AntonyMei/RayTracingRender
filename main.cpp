@@ -1,6 +1,6 @@
 //
 // Created by meiyixuan on 2021-12-09.
-// This is dev branch.
+// RayTracer 6.0, finished all.
 //
 /**************************** Usage ****************************/
 //
