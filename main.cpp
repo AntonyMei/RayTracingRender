@@ -42,18 +42,21 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 100; // 1000, 100 (x4 if no global light)
     const int max_depth = 10; // 100, 50
+    const int photon_map_size = 500000;
 #elif defined(DEBUG)
     const auto aspect_ratio = 1.0; // 16.0 / 9.0 or 1.0
     const int image_width = 800; // 3840, 800
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 100; // 1000, 100 (x4 if no global light)
     const int max_depth = 10; // 100, 50
+    const int photon_map_size = 5000000;
 #else
     const auto aspect_ratio = 1.0; // 16.0 / 9.0 or 1.0
     const int image_width = 3840;
     const int image_height = static_cast<int>(image_width / aspect_ratio);
     const int samples_per_pixel = 1000;
     const int max_depth = 50;
+    const int photon_map_size = 20000000;
 #endif
 
     // image
@@ -113,26 +116,26 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
         BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
         // photon map and integrator
-        auto photon_map = std::make_shared<PhotonMap>(6000000);
+        auto photon_map = std::make_shared<PhotonMap>(photon_map_size * 1.2);
         auto integrator = PhotonMappingIntegrator(world, skybox, photon_map);
 
         // generate photon map
-        Vector3d origin, direction, power = Vector3d(27, 27, 27);
+        Vector3d origin, direction, power = Vector3d(6, 6, 6);
         double power_scale;
-        while (photon_map->get_photon_num() < 5000000) {
+        while (photon_map->get_photon_num() < photon_map_size) {
             if (photon_map->get_photon_num() % 100000 == 0)
                 std::cerr << "Finished " << photon_map->get_photon_num() << " photons." << std::endl;
             light->generate_photon(origin, direction, power_scale);
             Ray ray(origin, direction);
             integrator.trace_photon(ray, 10, power_scale * power);
         }
-        while (photon_map->get_photon_num() < 6000000) {
+        while (photon_map->get_photon_num() < photon_map_size * 1.2) {
             if (photon_map->get_photon_num() % 50000 == 0)
                 std::cerr << "Finished " << photon_map->get_photon_num() << " photons." << std::endl;
             light->generate_photon(origin, direction, power_scale);
             Ray ray(origin, direction);
             integrator.trace_photon_caustic(ray, 10,
-                                            power_scale * power * Vector3d(0.87, 0.49, 0.173));
+                                            power_scale * power * Vector3d(0.87, 0.49, 0.173) * 12);
         }
         photon_map->balance();
 

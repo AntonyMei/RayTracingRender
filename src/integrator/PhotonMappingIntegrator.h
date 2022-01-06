@@ -16,15 +16,14 @@ public:
             Ray scattered_ray;
             Color emit_color = hit.mat_ptr->emit(hit.u, hit.v, hit.hit_point);
             if (remaining_bounce >= 0 && hit.mat_ptr->scatter(r, hit, scattered_ray)) {
-                if (hit.scatter_mode == 1) {
-                    // specular -> reflect
-                    return emit_color + hit.mat_ptr->brdf(r, scattered_ray, hit)
-                           * cast_ray(scattered_ray, remaining_bounce - 1);
+                auto attenuation = hit.mat_ptr->brdf(r, scattered_ray, hit);
+                Color light_color;
+                if (hit.scatter_mode == 0) {
+                    light_color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.1, 10);
                 } else {
-                    // diffuse -> query photon map
-                    auto color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.1, 50);
-                    return emit_color + color;
+                    light_color = cast_ray(scattered_ray, remaining_bounce - 1);
                 }
+                return emit_color + light_color * attenuation;
             } else {
                 return emit_color;
             }
@@ -38,11 +37,13 @@ public:
         if (world.hit(ray, TMIN, inf, hit)) {
             Ray scattered_ray;
             if (remaining_bounce > 0 && hit.mat_ptr->scatter(ray, hit, scattered_ray)) {
-                if (hit.scatter_mode == 1) {
-                    trace_photon(scattered_ray, remaining_bounce - 1, power);
-                } else {
+                // store photon at diffuse surface
+                if (hit.scatter_mode == 0) {
                     photon_map->store(Photon(hit.hit_point, ray.direction(), power));
                 }
+                // generate a new photon
+                Color attenuation = hit.mat_ptr->brdf(ray, scattered_ray, hit);
+                trace_photon(scattered_ray, remaining_bounce - 1, power * attenuation);
             }
         }
     }
@@ -52,7 +53,7 @@ public:
         if (world.hit(ray, TMIN, inf, hit)) {
             Ray scattered_ray;
             if (remaining_bounce > 0 && hit.mat_ptr->scatter(ray, hit, scattered_ray)) {
-                if (hit.scatter_mode == 1) {
+                if (hit.scatter_mode == 1 || hit.scatter_mode == 2) {
                     trace_photon(scattered_ray, remaining_bounce - 1, power);
                 } else {
                     if (remaining_bounce == 10) return;
