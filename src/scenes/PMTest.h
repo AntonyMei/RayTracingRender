@@ -13,7 +13,6 @@ HittableList PM_test_scene() {
     auto white = std::make_shared<Lambertian>(std::make_shared<ColorTexture>(0.53, 0.53, 0.53));
     auto green = std::make_shared<Lambertian>(std::make_shared<ColorTexture>(0.12, 0.45, 0.15));
     auto bunny_mat = std::make_shared<Dielectric>(1.5, Vector3d(0.87, 0.49, 0.173));
-//    auto bunny_mat = std::make_shared<Dielectric>(1.5, Vector3d(1, 1, 1));
 
     // wall objects
     auto l_wall = std::make_shared<YZRectangle>(0, 5.55, 0, 5.55, 5.55, red);
@@ -21,7 +20,7 @@ HittableList PM_test_scene() {
     auto ceiling = std::make_shared<XZRectangle>(0, 5.55, 0, 5.55, 5.55, white);
     auto floor = std::make_shared<XZRectangle>(0, 5.55, 0, 5.55, 0, white);
     auto front = std::make_shared<XYRectangle>(0, 5.55, 0, 5.55, 5.55, white);
-    auto box = std::make_shared<Box>(Vector3d(0, 0, 0), Vector3d(0.6, 0.6, 0.6), white);
+    auto box = std::make_shared<Box>(Vector3d(0, 0, 0), Vector3d(0.6, 0.6, 0.6), green);
     objects.add(l_wall);
     objects.add(r_wall);
     objects.add(ceiling);

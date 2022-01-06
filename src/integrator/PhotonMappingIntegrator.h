@@ -19,7 +19,7 @@ public:
                 auto attenuation = hit.mat_ptr->brdf(r, scattered_ray, hit);
                 Color light_color;
                 if (hit.scatter_mode == 0) {
-                    light_color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.1, 10);
+                    light_color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.1, 50);
                 } else {
                     light_color = cast_ray(scattered_ray, remaining_bounce - 1);
                 }
