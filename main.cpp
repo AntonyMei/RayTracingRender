@@ -40,7 +40,9 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
 
     // Render
     /************************* Integrator *************************/
-    integrator_type = use_photon_map(); // first specify use_photon_map() or use_path_tracing()
+    // first specify use_photon_map() or use_path_tracing()
+    // integrator_type = use_photon_map();
+    integrator_type = use_path_tracing();
     /**************************************************************/
     if (integrator_type == 0) {
         // World, camera and skybox
