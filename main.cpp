@@ -2,6 +2,12 @@
 // Created by meiyixuan on 2021-12-09.
 // This is dev branch.
 //
+/**************************** Usage ****************************/
+// step 1: set image size setting (by setting flags in CMakeList.txt)
+// step 2: choose integrator (Photon Mapping only supports one scene, Path Tracing has step 3
+//         of setting scene)
+// step 3: set scene, camera and skybox (scene functions can be found in src/scenes)
+/***************************************************************/
 #include "Headers.h"
 
 void render_scene(int current_id, int max_processes, const char *output_file) {
