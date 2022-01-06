@@ -3,10 +3,34 @@
 // This is dev branch.
 //
 /**************************** Usage ****************************/
-// step 1: set image size setting (by setting flags in CMakeList.txt)
+//
+// Note: If compiled on Windows, flag $WINDOWS$ is automatically set. If compiled
+//       on Linux, can use $DEBUG$ to switch between debug run (fast) or normal
+//       run (high quality).
+//
+// How set scene before compile:
+// step 1: set image settings (customization (e.g. changing aspect_ratio to
+//         16.0 / 9.0) can be done by modifying render_scene in main.cpp)
 // step 2: choose integrator (Photon Mapping only supports one scene, Path Tracing has step 3
 //         of setting scene)
 // step 3: set scene, camera and skybox (scene functions can be found in src/scenes)
+//
+// How to run this renderer:
+// Windows:
+// step 1: compile with Clion using MSVC compiler
+// step 2: run "Project.exe 8", here 8 means using 8 threads
+//         (after running we will get 8 .partial files)
+// step 3: run "packager.exe 8", here 8 means combining 8 partial files
+//         (after running we will get a .ppm image, which can be opened
+//         using OpenSeeIt)
+// step 4: run python convert.py, which converts .ppm into .jpg
+//         (note that opencv for python is required to run this)
+// Linux:
+// run "bash linux_run.sh", which compiles the renderer, uses 80 processes
+// to run it and process result into a .ppm and a .jpg file. (Note that for
+// default SponzaCrytek scene, about 150 GB memory is required. This requirement
+// is proportional to the number of processes.)
+//
 /***************************************************************/
 #include "Headers.h"
 
