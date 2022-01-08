@@ -228,17 +228,10 @@ A bunny rendered using Photon Mapping. When rendering the first image, photon tr
 
 run "bash linux$\_$run.sh", which compiles the renderer, uses 80 processes to run it and process result into a .ppm and a .jpg file. (Note that for default Sponza Crytek scene, about 150 GB memory is required. This requirement is proportional to the number of processes.)
 
+\section{Renderer Function Menu}
+The basic functionalities of this renderer are listed in this section. Detailed description with code and explanation can be found in the following chapters.
 
-
-
-
-
-
-
-\section{Renderer Structure}
-The basic structure of this renderer is as follows:
-
-\subsection{Basic Renderer:}
+\subsection{Core Renderer:}
 \noindent
 \textbf{Integrator: } Monte Carlo Path Tracing, Photon Mapping.
 
@@ -278,7 +271,22 @@ The basic structure of this renderer is as follows:
 \noindent
 \textbf{Other Visual Effects: } Gamma Correction, Caustic.
 
-\section{Code Explanation}
+\section{Renderer Infrastructures}
+
+\subsection{Math Utilities}
+
+\subsection{Basic Datatypes}
+
+\subsection{External Libraries}
+
+
+
+
+
+
+
+
+
 
 \section{References}
 \noindent
