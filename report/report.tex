@@ -258,7 +258,7 @@ run "bash linux$\_$run.sh", which compiles the renderer, uses 80 processes to ru
 \section{Renderer Function Menu}
 The basic functionalities of this renderer are listed in this section. Detailed description with code and explanation can be found in the following chapters.
 
-\subsection{Core Renderer:}
+\subsection{Renderer Core:}
 \noindent
 \textbf{Integrator: } Monte Carlo Path Tracing, Photon Mapping.
 
@@ -993,16 +993,595 @@ struct NearestPhotons {
 \end{lstlisting}
 NearestPhotons is a data structure that store nearest photons at given position. It is generated from full PhotonMap and used to determine light intensity at a given point on diffuse surface. 
 
+\subsubsection{PhotonMap (src/core/PhotonMap)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-29.
+//
+
+#ifndef PROJECT_PHOTONMAP_H
+#define PROJECT_PHOTONMAP_H
+
+int calculate_median(int start, int end);
+
+class PhotonMap {
+	public:
+	PhotonMap() {
+		max_photon_num = 10000;
+		photon_num = 0;
+		photon_list = new Photon[10000];
+		box_min = Vector3d(10000, 10000, 10000);
+		box_max = Vector3d(-10000, -10000, -10000);
+	};
+	
+	explicit PhotonMap(int max) {
+		max_photon_num = max;
+		photon_num = 0;
+		photon_list = new Photon[max];
+		box_min = Vector3d(10000, 10000, 10000);
+		box_max = Vector3d(-10000, -10000, -10000);
+	};
+	
+	~PhotonMap() = default;
+	
+	void store(Photon p) {
+		if (photon_num >= max_photon_num) return;
+		photon_list[photon_num++] = p;
+		box_min = Vector3d(fmin(box_min.x(), p.position.x()),
+		fmin(box_min.y(), p.position.y()),
+		fmin(box_min.z(), p.position.z()));
+		box_max = Vector3d(fmax(box_max.x(), p.position.x()),
+		fmax(box_max.y(), p.position.y()),
+		fmax(box_max.z(), p.position.z()));
+	}
+	
+	static void median_split(Photon *temp, int start, int end, int med, int axis) {
+		// heap sort
+		int l = start, r = end;
+		while (l < r) {
+			double key = temp[r].position[axis];
+			int i = l - 1, j = r;
+			while (true) {
+				while (temp[++i].position[axis] < key);
+				while (temp[--j].position[axis] > key && j > l);
+				if (i >= j) break;
+				std::swap(temp[i], temp[j]);
+			}
+			std::swap(temp[i], temp[r]);
+			if (i >= med) r = i - 1;
+			if (i <= med) l = i + 1;
+		}
+	}
+	
+	void balance() {
+		auto *temp = new Photon[photon_num + 1];
+		for (int i = 1; i <= photon_num; ++i) {
+			temp[i] = photon_list[i];
+		}
+		balance_segment(temp, 1, 1, photon_num);
+		delete[] temp;
+	}
+	
+	void balance_segment(Photon *temp, int index, int start, int end) {
+		if (start == end) {
+			photon_list[index] = temp[start];
+			return;
+		}
+		int med = calculate_median(start, end);
+		int axis;
+		if (box_max.x() - box_min.x() > box_max.y() - box_min.y() &&
+		box_max.x() - box_min.x() > box_max.z() - box_min.z())
+		axis = 0;
+		else if (box_max.y() - box_min.y() > box_max.z() - box_min.z())
+		axis = 1;
+		else
+		axis = 2;
+		median_split(temp, start, end, med, axis);
+		photon_list[index] = temp[med];
+		photon_list[index].axis = axis;
+		if (start < med) {
+			double tmp = box_max[axis];
+			box_max[axis] = photon_list[index].position[axis];
+			balance_segment(temp, index * 2, start, med - 1);
+			box_max[axis] = tmp;
+		}
+		if (med < end) {
+			double tmp = box_min[axis];
+			box_min[axis] = photon_list[index].position[axis];
+			balance_segment(temp, index * 2 + 1, med + 1, end);
+			box_min[axis] = tmp;
+		}
+	}
+	
+	void get_nearest_photons(NearestPhotons *nearest_photons, int index) {
+		if (index > photon_num) return;
+		Photon *photon = &photon_list[index];
+		if (index * 2 <= photon_num) {
+			double dist = nearest_photons->pos[photon->axis] - photon->position[photon->axis];
+			if (dist < 0) {
+				get_nearest_photons(nearest_photons, index * 2);
+				if (dist * dist < nearest_photons->dist_square[0])
+				get_nearest_photons(nearest_photons, index * 2 + 1);
+			} else {
+				get_nearest_photons(nearest_photons, index * 2 + 1);
+				if (dist * dist < nearest_photons->dist_square[0])
+				get_nearest_photons(nearest_photons, index * 2);
+			}
+		}
+		double dist_square = (photon->position - nearest_photons->pos).squared_length();
+		if (dist_square > nearest_photons->dist_square[0]) return;
+		if (nearest_photons->found_photons < nearest_photons->max_photons) {
+			nearest_photons->found_photons++;
+			nearest_photons->dist_square[nearest_photons->found_photons] = dist_square;
+			nearest_photons->photons[nearest_photons->found_photons] = photon;
+		} else {
+			if (!nearest_photons->heap_full) {
+				for (int i = nearest_photons->found_photons >> 1; i >= 1; --i) {
+					int par = i;
+					auto temp_photon = nearest_photons->photons[i];
+					double temp_dist_square = nearest_photons->dist_square[i];
+					while ((par << 1) <= nearest_photons->found_photons) {
+						int j = par << 1;
+						if (j + 1 <= nearest_photons->found_photons
+						&& nearest_photons->dist_square[j] < nearest_photons->dist_square[j + 1])
+						j++;
+						if (temp_dist_square >= nearest_photons->dist_square[j]) break;
+						nearest_photons->photons[par] = nearest_photons->photons[j];
+						nearest_photons->dist_square[par] = nearest_photons->dist_square[j];
+						par = j;
+					}
+					nearest_photons->photons[par] = temp_photon;
+					nearest_photons->dist_square[par] = temp_dist_square;
+				}
+				nearest_photons->heap_full = true;
+			}
+			int par = 1;
+			while ((par << 1) <= nearest_photons->found_photons) {
+				int j = par << 1;
+				if (j + 1 <= nearest_photons->found_photons
+				&& nearest_photons->dist_square[j] < nearest_photons->dist_square[j + 1])
+				j++;
+				if (dist_square >= nearest_photons->dist_square[j]) break;
+				nearest_photons->photons[par] = nearest_photons->photons[j];
+				nearest_photons->dist_square[par] = nearest_photons->dist_square[j];
+				par = j;
+			}
+			nearest_photons->photons[par] = photon;
+			nearest_photons->dist_square[par] = dist_square;
+			nearest_photons->dist_square[0] = nearest_photons->dist_square[1];
+		}
+	}
+	
+	Color get_irradiance(Vector3d pos, Vector3d norm, double max_dist, int N) {
+		Vector3d ret(0, 0, 0);
+		NearestPhotons np;
+		np.pos = pos;
+		np.max_photons = N;
+		np.dist_square = new double[N + 1];
+		np.photons = new Photon *[N + 1];
+		np.dist_square[0] = max_dist * max_dist;
+		get_nearest_photons(&np, 1);
+		if (np.found_photons <= 0.3 * N) return ret;
+		for (int i = 1; i <= np.found_photons; ++i) {
+			auto dir = np.photons[i]->direction;
+			// filtering
+			double filter = 1.0 - (pos - np.photons[i]->position).length() / (1.1 * max_dist);
+			if (dot(norm, dir) < 0) ret = ret + np.photons[i]->power * filter;
+		}
+		ret = ret * (1.0 / (500000 * pi * np.dist_square[0]));
+		return ret;
+	}
+	
+	int get_photon_num() const { return photon_num; }
+	
+	private:
+	int photon_num;
+	int max_photon_num;
+	Photon *photon_list;
+	Point box_min, box_max;
+};
+
+int calculate_median(int start, int end) {
+	int num = end - start + 1;
+	int med;
+	int as = 1, b = 2;
+	while (as < num) {
+		as += b;
+		b *= 2;
+	}
+	if (as == num) return start + num / 2;
+	b /= 2;
+	if (as - b / 2 < num) {
+		return start + as / 2;
+	} else {
+		return start + as / 2 - (as - b / 2 - num);
+	}
+}
+
+#endif //PROJECT_PHOTONMAP_H
+
+\end{lstlisting}
+This is really a long file. PhotonMap is a data structure based on balanced Kd-Tree. In building stage, it is responsible for storing all photons generated by the Photon Mapper. In backward tracing stage, it serves as an oracle that returns nearest photons of any given position (as radiance). This part of the code heavily relies on Code Reference [3]'s code with some minor modifications.
+
 \subsection{External Libraries}
 
+\subsubsection{stb$\_$image (ext/stb$\_$image/stb$\_$image$\_$header.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+// This file imports stb_image.h
+//
 
+#ifndef PROJECT_STB_IMAGE_HEADER_H
+#define PROJECT_STB_IMAGE_HEADER_H
 
+// Disable pedantic warnings for this external library.
+#ifdef _MSC_VER
+// Microsoft Visual C++ Compiler
+#pragma warning (push, 0)
+#endif
 
+#define STB_IMAGE_IMPLEMENTATION
 
+#include "stb_image.h"
 
+// Restore warning levels.
+#ifdef _MSC_VER
+// Microsoft Visual C++ Compiler
+#pragma warning (pop)
+#endif
 
+#endif //PROJECT_STB_IMAGE_HEADER_H
 
+\end{lstlisting}
+stb$\_$image is a nice header-only library designed for loading various kinds of images. It is used to load image into ImageTexture in the renderer. Here we only show our header, instead of the whole external library (which is thousands of lines in length).
 
+\subsubsection{tinyobjloader (ext/tinyobjloader/tiny$\_$obj$\_$loader$\_$header.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-20.
+//
+
+#ifndef PROJECT_TINY_OBJ_LOADER_HEADER_H
+#define PROJECT_TINY_OBJ_LOADER_HEADER_H
+
+#define TINYOBJLOADER_USE_DOUBLE
+#define TINYOBJLOADER_IMPLEMENTATION
+#define TINYOBJLOADER_USE_MAPBOX_EARCUT
+
+#include "tiny_obj_loader.h"
+
+#endif //PROJECT_TINY_OBJ_LOADER_HEADER_H
+
+\end{lstlisting}
+tinyobjloader is a header-only library for .obj import. Here, $TINYOBJLOADER\_USE\_DOUBLE$ is defined since our renderer uses double rather than float for float point storage.
+
+$TINYOBJLOADER\_USE\_MAPBOX\_EARCUT$ is defined since our mesh is triangular mesh and does not support shapes with more than three vertices. Mapbox uses Earcut algorithm to perform robust triangularization. Note that although this algorithm is said to be robust, the real result still contains many degenerated triangles (in uv space) and needs extra preprocessing before using.
+
+\section{Renderer Core}
+
+\subsection{Rendering Procedure}
+The rendering procedure is quite straightforward. First, in main.cpp, render workers are spawned according to platform and console arguments. Each render worker is responsible for a few lines of the final image and output its result as a .partial file. Then, packager.exe is called to assemble partial files into a .ppm image. After this step, the rendering result is finally visible. However, a typical 4K .ppm image takes around 150MB of disk space. We use convert.py to convert it into a compressed .jpg image, without losing much information. Detailed code are as follows.
+
+\subsubsection{Renderer (main.cpp) and Packager (packager.cpp)}
+\noindent
+\textbf{main.cpp: }
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-09.
+// This is dev branch.
+//
+/**************************** Usage ****************************/
+//
+// Note: If compiled on Windows, flag $WINDOWS$ is automatically set. If compiled
+//       on Linux, can use $DEBUG$ to switch between debug run (fast) or normal
+//       run (high quality).
+//
+// How set scene before compile:
+// step 1: set image settings (customization (e.g. changing aspect_ratio to
+//         16.0 / 9.0) can be done by modifying render_scene in main.cpp)
+// step 2: choose integrator (Photon Mapping only supports one scene, Path Tracing has step 3
+//         of setting scene)
+// step 3: set scene, camera and skybox (scene functions can be found in src/scenes)
+//
+// How to run this renderer:
+// Windows:
+// step 1: compile with Clion using MSVC compiler
+// step 2: run "Project.exe 8", here 8 means using 8 threads
+//         (after running we will get 8 .partial files)
+// step 3: run "packager.exe 8", here 8 means combining 8 partial files
+//         (after running we will get a .ppm image, which can be opened
+//         using OpenSeeIt)
+// step 4: run python convert.py, which converts .ppm into .jpg
+//         (note that opencv for python is required to run this)
+// Linux:
+// run "bash linux_run.sh", which compiles the renderer, uses 80 processes
+// to run it and process result into a .ppm and a .jpg file. (Note that for
+// default SponzaCrytek scene, about 150 GB memory is required. This requirement
+// is proportional to the number of processes.)
+//
+/***************************************************************/
+#include "Headers.h"
+
+void render_scene(int current_id, int max_processes, const char *output_file) {
+	// Image settings
+	#if defined(WINDOWS)
+	const auto aspect_ratio = 1.0; // 16.0 / 9.0 or 1.0
+	const int image_width = 400; // 3840, 800
+	const int image_height = static_cast<int>(image_width / aspect_ratio);
+	const int samples_per_pixel = 100; // 1000, 100 (x4 if no global light)
+	const int max_depth = 10; // 100, 50
+	const int photon_map_size = 500000;
+	#elif defined(DEBUG)
+	const auto aspect_ratio = 1.0; // 16.0 / 9.0 or 1.0
+	const int image_width = 800; // 3840, 800
+	const int image_height = static_cast<int>(image_width / aspect_ratio);
+	const int samples_per_pixel = 100; // 1000, 100 (x4 if no global light)
+	const int max_depth = 10; // 100, 50
+	const int photon_map_size = 5000000;
+	#else
+	const auto aspect_ratio = 1.0; // 16.0 / 9.0 or 1.0
+	const int image_width = 3840;
+	const int image_height = static_cast<int>(image_width / aspect_ratio);
+	const int samples_per_pixel = 1000;
+	const int max_depth = 50;
+	const int photon_map_size = 20000000;
+	#endif
+	
+	// image
+	auto image = std::vector<std::vector<Pixel>>();
+	for (int idx = 0; idx < image_height; ++idx) {
+		auto row = std::vector<Pixel>(image_width);
+		image.push_back(std::move(row));
+	}
+	
+	// multiprocessing related (id = 0 - max_processes - 1)
+	int work_load = image_height / max_processes;
+	int start_row = image_height - 1 - work_load * current_id;
+	int end_row = current_id == max_processes - 1 ? -1 : start_row - work_load;
+	
+	// Render
+	/************************* Integrator *************************/
+	// first specify use_photon_map() or use_path_tracing()
+	// integrator_type = use_photon_map();
+	integrator_type = use_path_tracing();
+	/**************************************************************/
+	if (integrator_type == 0) {
+		// World, camera and skybox
+		// 1. Note that motion blur objects should be created with 0.0 - 1.0.
+		//    Control motion blur with camera's shutter.
+		// 2. use global_light_skybox if no other lights enabled
+		/************************** Scene **************************/
+		HittableList world = sponza_crytek_scene();
+		SimpleCamera cam = sponza_crytek_camera(aspect_ratio);
+		auto skybox = sponza_crytek_skybox_cloudy();
+		/**********************************************************/
+		BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
+		
+		PathTracingIntegrator integrator(world_bvh, skybox);
+		for (int j = start_row; j > end_row; --j) {
+			std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
+			auto start = time(nullptr);
+			for (int i = 0; i < image_width; ++i) {
+				Color pixel_color(0, 0, 0);
+				for (int s = 0; s < samples_per_pixel; ++s) {
+					auto u = (i + random_double()) / (image_width - 1);
+					auto v = (j + random_double()) / (image_height - 1);
+					Ray r = cam.get_ray(u, v);
+					pixel_color += integrator.cast_ray(r, max_depth);
+				}
+				image[j][i].set(pixel_color, samples_per_pixel);
+			}
+			auto end = time(nullptr);
+			std::cerr << "loop time " << end - start << "s\n" << std::flush;
+		}
+	} else if (integrator_type == 1) {
+		// World, camera and skybox
+		HittableList world = PM_test_scene();
+		auto light = PM_test_light();
+		world.add(light);
+		SimpleCamera cam = PM_test_camera(aspect_ratio);
+		auto skybox = PM_test_skybox();
+		BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
+		
+		// photon map and integrator
+		auto photon_map = std::make_shared<PhotonMap>(photon_map_size * 1.2);
+		auto integrator = PhotonMappingIntegrator(world, skybox, photon_map);
+		
+		// generate photon map
+		Vector3d origin, direction, power = Vector3d(6, 6, 6);
+		double power_scale;
+		while (photon_map->get_photon_num() < photon_map_size) {
+			if (photon_map->get_photon_num() % 100000 == 0)
+			std::cerr << "Finished " << photon_map->get_photon_num() << " photons." << std::endl;
+			light->generate_photon(origin, direction, power_scale);
+			Ray ray(origin, direction);
+			integrator.trace_photon(ray, 10, power_scale * power);
+		}
+		while (photon_map->get_photon_num() < photon_map_size * 1.2) {
+			if (photon_map->get_photon_num() % 50000 == 0)
+			std::cerr << "Finished " << photon_map->get_photon_num() << " photons." << std::endl;
+			light->generate_photon(origin, direction, power_scale);
+			Ray ray(origin, direction);
+			integrator.trace_photon_caustic(ray, 10,
+			power_scale * power * Vector3d(0.87, 0.49, 0.173) * 12);
+		}
+		photon_map->balance();
+		
+		// render
+		for (int j = start_row; j > end_row; --j) {
+			std::cerr << "Scanlines remaining: " << j - end_row << '\n' << std::flush;
+			auto start = time(nullptr);
+			for (int i = 0; i < image_width; ++i) {
+				Color pixel_color(0, 0, 0);
+				for (int s = 0; s < samples_per_pixel; ++s) {
+					auto u = (i + random_double()) / (image_width - 1);
+					auto v = (j + random_double()) / (image_height - 1);
+					Ray r = cam.get_ray(u, v);
+					pixel_color += integrator.cast_ray(r, max_depth);
+				}
+				image[j][i].set(pixel_color, samples_per_pixel);
+			}
+			auto end = time(nullptr);
+			std::cerr << "loop time " << end - start << "s\n" << std::flush;
+		}
+	}
+	
+	// output
+	std::ofstream file;
+	file.open(output_file, std::ios::out | std::ios::trunc);
+	if (current_id == 0)
+	file << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+	for (int j = start_row; j > end_row; --j) {
+		for (int i = 0; i < image_width; ++i) {
+			image[j][i].write(file);
+		}
+	}
+	file.close();
+	std::cerr << "\nDone.\n";
+}
+
+int main(int argc, char *argv[]) {
+	// parse arguments
+	if (argc != 2) {
+		std::cerr << "Need to specify process count" << std::endl;
+		return 0;
+	}
+	int max_processes = parse_int(argv[1], strlen(argv[1]));
+	std::cerr << "Render will use " << max_processes << " processes." << std::endl;
+	
+	// launch real renderer
+	#if defined(WINDOWS)
+	
+	if (max_processes == 1) {
+		render_scene(0, 1, "1.ppm");
+	} else {
+		omp_set_num_threads(max_processes);
+		#pragma omp parallel for
+		for (int thread_idx = 0; thread_idx < max_processes; ++thread_idx) {
+			std::string file_name = std::to_string(thread_idx) + ".partial";
+			render_scene(thread_idx, max_processes, file_name.c_str());
+		}
+	}
+	
+	#else
+	
+	if (max_processes == 1) {
+		render_scene(0, 1, "1.ppm");
+	} else {
+		std::vector<pid_t> pid_list;
+		for (int process_idx = 0; process_idx < max_processes; ++process_idx) {
+			std::string file_name = std::to_string(process_idx) + ".partial";
+			pid_t pid = fork();
+			if (pid != 0) {
+				// parent
+				pid_list.push_back(pid);
+				continue;
+			} else {
+				// child
+				std::cerr << "Worker " << process_idx << " initialized on " << pid << std::endl;
+				render_scene(process_idx, max_processes, file_name.c_str());
+				return 0;
+			}
+		}
+		for (auto pid: pid_list) {
+			waitpid(pid, NULL, 0);
+		}
+	}
+	
+	#endif
+}
+\end{lstlisting}
+
+\noindent
+\textbf{packager.cpp: }
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-14.
+//
+
+#include "Headers.h"
+
+using namespace std;
+
+int main(int argc, char *argv[]) {
+	// check argument count
+	if (argc != 2) {
+		cout << "Need to specify the number of partial files" << endl;
+		return 0;
+	}
+	int file_count = parse_int(argv[1], strlen(argv[1]));
+	
+	// open output
+	ofstream output;
+	output.open("1.ppm", ios::out | ios::trunc);
+	
+	// parse partial files
+	for (int idx = 0; idx < file_count; ++idx) {
+		// open input
+		ifstream input;
+		string input_file_name = to_string(idx) + ".partial";
+		input.open(input_file_name.c_str());
+		
+		// parse
+		string line;
+		while (getline(input, line)) {
+			output << line << "\n";
+		}
+		
+		// clean up
+		input.close();
+	}
+	output.close();
+}
+
+\end{lstlisting}
+
+\subsubsection{Other files}
+\noindent
+\textbf{CMakeList.txt}
+\begin{lstlisting}[style=CStyle]
+cmake_minimum_required(VERSION 3.19)
+project(Project)
+
+set(CMAKE_CXX_STANDARD 14)
+
+IF(WIN32)
+add_definitions(-D WINDOWS)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /openmp")
+ELSE()
+add_definitions(-D DEBUG)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -O2 -pthread -fopenmp")
+ENDIF()
+
+add_executable(Project main.cpp)
+add_executable(packager packager.cpp)
+
+\end{lstlisting}
+
+\noindent
+\textbf{linux$\_$run.sh}
+\begin{lstlisting}[style=CStyle]
+cmake .
+make clean
+make
+./Project 80
+rm 1.ppm
+rm 1.jpg
+./packager 80
+rm *.partial
+python convert.py
+\end{lstlisting}
+
+\noindent
+\textbf{converter.py}
+\begin{lstlisting}[style=CStyle]
+import cv2
+
+i = cv2.imread('1.ppm')
+cv2.imwrite('1.jpg', i)
+
+\end{lstlisting}
 
 \section{References}
 \noindent
