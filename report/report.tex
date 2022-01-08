@@ -14,6 +14,33 @@
 
 \onehalfspacing
 
+\usepackage{listings}
+\usepackage{xcolor}
+\definecolor{mGreen}{rgb}{0,0.6,0}
+\definecolor{mGray}{rgb}{0.5,0.5,0.5}
+\definecolor{mPurple}{rgb}{0.58,0,0.82}
+\definecolor{backgroundColour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{CStyle}{
+	backgroundcolor=\color{backgroundColour},   
+	commentstyle=\color{mGreen},
+	keywordstyle=\color{magenta},
+	numberstyle=\tiny\color{mGray},
+	stringstyle=\color{mPurple},
+	basicstyle=\footnotesize,
+	breakatwhitespace=false,         
+	breaklines=true,                 
+	captionpos=b,                    
+	keepspaces=true,                 
+	numbers=left,                    
+	numbersep=5pt,                  
+	showspaces=false,                
+	showstringspaces=false,
+	showtabs=false,                  
+	tabsize=2,
+	language=C
+}
+
 \title{\bf\huge Ray Tracing Renderer}
 \author{Mei Yixuan}
 \date{\today}
@@ -274,6 +301,425 @@ The basic functionalities of this renderer are listed in this section. Detailed 
 \section{Renderer Infrastructures}
 
 \subsection{Math Utilities}
+
+\subsubsection{Basic Math Utilities (/src/math/Utils.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-10.
+//
+
+#ifndef PROJECT_UTILS_H
+#define PROJECT_UTILS_H
+
+// path
+inline std::string model_pth() {
+	#if defined(WINDOWS)
+	return "./";
+	#else
+	return "./resources/";
+	#endif
+}
+
+// memory
+using std::shared_ptr;
+using std::make_shared;
+
+// statistics
+int normal_triangles = 0;
+int u_degrade_triangles = 0;
+int v_degrade_triangles = 0;
+int unrecoverable_triangles = 0;
+
+// integrator
+int integrator_type;
+
+int use_photon_map() { return 1; }
+
+int use_path_tracing() { return 0; }
+
+// math
+using std::sqrt;
+const double inf = std::numeric_limits<double>::infinity();
+const double TMIN = 0.001;
+const double EPSILON = 0.0000001;
+const double pi = 3.1415926535897932385;
+
+inline double deg2rad(double deg) {
+	return deg * pi / 180.0;
+}
+
+inline double clamp(double x, double min, double max) {
+	if (x < min) return min;
+	if (x > max) return max;
+	return x;
+}
+
+// random
+inline double random_double_fixed() {
+	// random number in [0, 1), with fixed initial seed
+	// This function is thread-identical, and should be used in
+	// perlin noise and random scene generation.
+	return rand() / (RAND_MAX + 1.0);
+}
+
+inline double random_double() {
+	if (integrator_type == 1) {
+		return random_double_fixed();
+	}
+	// random number in [0, 1)
+	static std::random_device rd;
+	static std::uniform_real_distribution<double> distribution(0.0, 1.0);
+	static std::mt19937 generator(rd());
+	return distribution(generator);
+}
+
+inline double random_double(double min, double max) {
+	// random real in [min,max).
+	return min + (max - min) * random_double();
+}
+
+inline double random_double_fixed(double min, double max) {
+	// random real in [min,max).
+	return min + (max - min) * random_double_fixed();
+}
+
+inline int random_int_fixed(int min, int max) {
+	// Returns a random integer in [min,max].
+	return static_cast<int>(random_double_fixed(min, max + 1));
+}
+
+// input
+int parse_int(const char *buf, size_t len) {
+	int res = 0;
+	for (size_t i = 0; i < len; ++i) {
+		res *= 10;
+		res += buf[i] - '0';
+	}
+	return res;
+}
+
+#endif //PROJECT_UTILS_H
+
+\end{lstlisting}
+Basic math and random utilities. Note that we need a predictable random function (random$\_$double$\_$fixed) for multiprocessing, since some random number sequences must be identical across processes (e.g. random numbers used in scene initialization). 
+
+\subsubsection{Vector Math (/src/math/Vector3d.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-09.
+// Basic math class for vector operations.
+//
+
+#ifndef PROJECT_VECTOR3D_H
+#define PROJECT_VECTOR3D_H
+
+class Vector3d {
+	public:
+	// constructors
+	Vector3d() : val{0, 0, 0} {}
+	
+	Vector3d(double x, double y, double z) : val{x, y, z} {}
+	
+	// data
+	double x() const { return val[0]; }
+	
+	double y() const { return val[1]; }
+	
+	double z() const { return val[2]; }
+	
+	// operators
+	Vector3d &operator+=(const Vector3d &v) {
+		val[0] += v.val[0];
+		val[1] += v.val[1];
+		val[2] += v.val[2];
+		return *this;
+	}
+	
+	Vector3d &operator-=(const Vector3d &v) {
+		val[0] -= v.val[0];
+		val[1] -= v.val[1];
+		val[2] -= v.val[2];
+		return *this;
+	}
+	
+	Vector3d &operator*=(const double t) {
+		val[0] *= t;
+		val[1] *= t;
+		val[2] *= t;
+		return *this;
+	}
+	
+	Vector3d &operator/=(const double t) {
+		return *this *= 1 / t;
+	}
+	
+	Vector3d operator-() const { return {-val[0], -val[1], -val[2]}; }
+	
+	double operator[](int i) const { return val[i]; }
+	
+	double &operator[](int i) { return val[i]; }
+	
+	double length() const {
+		return std::sqrt(squared_length());
+	}
+	
+	double squared_length() const {
+		return val[0] * val[0] + val[1] * val[1] + val[2] * val[2];
+	}
+	
+	// utils
+	inline static Vector3d random() {
+		return {random_double(), random_double(), random_double()};
+	}
+	
+	inline static Vector3d random_fixed() {
+		return {random_double_fixed(), random_double_fixed(), random_double_fixed()};
+	}
+	
+	inline static Vector3d random(double min, double max) {
+		return {random_double(min, max), random_double(min, max), random_double(min, max)};
+	}
+	
+	inline static Vector3d random_fixed(double min, double max) {
+		return {random_double_fixed(min, max), random_double_fixed(min, max), random_double_fixed(min, max)};
+	}
+	
+	bool near_zero() const {
+		// Return true if the vector is close to zero in all dimensions.
+		const auto s = 1e-8;
+		return (fabs(val[0]) < s) && (fabs(val[1]) < s) && (fabs(val[2]) < s);
+	}
+	
+	public:
+	
+	double val[3];
+	
+	// for access to val directly
+	friend inline std::ostream &operator<<(std::ostream &out, const Vector3d &v);
+	
+	friend inline Vector3d operator+(const Vector3d &u, const Vector3d &v);
+	
+	friend inline Vector3d operator-(const Vector3d &u, const Vector3d &v);
+	
+	friend inline Vector3d operator*(const Vector3d &u, const Vector3d &v);
+	
+	friend inline Vector3d operator*(double t, const Vector3d &v);
+	
+	friend inline double dot(const Vector3d &u, const Vector3d &v);
+	
+	friend inline Vector3d cross(const Vector3d &u, const Vector3d &v);
+};
+
+using Point = Vector3d;   // 3D point
+using Color = Vector3d;    // RGB color
+
+inline std::ostream &operator<<(std::ostream &out, const Vector3d &v) {
+	return out << v.val[0] << ' ' << v.val[1] << ' ' << v.val[2];
+}
+
+inline Vector3d operator+(const Vector3d &u, const Vector3d &v) {
+	return {u.val[0] + v.val[0], u.val[1] + v.val[1], u.val[2] + v.val[2]};
+}
+
+inline Vector3d operator-(const Vector3d &u, const Vector3d &v) {
+	return {u.val[0] - v.val[0], u.val[1] - v.val[1], u.val[2] - v.val[2]};
+}
+
+inline Vector3d operator*(const Vector3d &u, const Vector3d &v) {
+	return {u.val[0] * v.val[0], u.val[1] * v.val[1], u.val[2] * v.val[2]};
+}
+
+inline Vector3d operator*(double t, const Vector3d &v) {
+	return {t * v.val[0], t * v.val[1], t * v.val[2]};
+}
+
+inline Vector3d operator*(const Vector3d &v, double t) {
+	return t * v;
+}
+
+inline Vector3d operator/(Vector3d v, double t) {
+	return (1 / t) * v;
+}
+
+inline double dot(const Vector3d &u, const Vector3d &v) {
+	return u.val[0] * v.val[0] + u.val[1] * v.val[1] + u.val[2] * v.val[2];
+}
+
+inline Vector3d cross(const Vector3d &u, const Vector3d &v) {
+	return {u.val[1] * v.val[2] - u.val[2] * v.val[1],
+		u.val[2] * v.val[0] - u.val[0] * v.val[2],
+		u.val[0] * v.val[1] - u.val[1] * v.val[0]};
+}
+
+inline Vector3d normalize(Vector3d v) {
+	return v / v.length();
+}
+
+Vector3d random_in_unit_disk() {
+	while (true) {
+		auto p = Vector3d(random_double(-1, 1), random_double(-1, 1), 0);
+		if (p.squared_length() >= 1) continue;
+		return p;
+	}
+}
+
+Vector3d random_in_unit_sphere() {
+	// uses reject sampling to generate a random point
+	while (true) {
+		auto p = Vector3d::random(-1, 1);
+		if (p.squared_length() >= 1) continue;
+		return p;
+	}
+}
+
+Vector3d random_unit_vector() {
+	return normalize(random_in_unit_sphere());
+}
+
+Vector3d random_in_hemisphere(const Vector3d &normal) {
+	Vector3d in_unit_sphere = random_in_unit_sphere();
+	if (dot(in_unit_sphere, normal) > 0.0)
+	return in_unit_sphere;
+	else
+	return -in_unit_sphere;
+}
+
+Vector3d reflect(const Vector3d &v, const Vector3d &n) {
+	return v - 2 * dot(v, n) * n;
+}
+
+Vector3d refract(const Vector3d &uv, const Vector3d &n, double refract_coefficient) {
+	// eta: typically air = 1.0, glass = 1.3 - 1.7, diamond = 2.4
+	// refract_coefficient is equal to eta_in / eta_out
+	auto cos_theta = fmin(dot(-uv, n), 1.0);
+	Vector3d r_out_perp = refract_coefficient * (uv + cos_theta * n);
+	Vector3d r_out_parallel = -sqrt(fabs(1.0 - r_out_perp.squared_length())) * n;
+	return r_out_perp + r_out_parallel;
+}
+
+#endif //PROJECT_VECTOR3D_H
+
+\end{lstlisting}
+This file contains all we need for vector math. Note that reflection, refraction and random vector sampling are all defined here as well.
+
+\subsubsection{Perlin Noise (/src/math/Perlin.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+// Perlin noise generator uses code from Peter Shirley.
+// Warning: Perlin noise generator must have identical seeds across all processes.
+//
+
+#ifndef PROJECT_PERLIN_H
+#define PROJECT_PERLIN_H
+
+class PerlinNoise {
+	public:
+	PerlinNoise() {
+		rand_vector = new Vector3d[point_count];
+		for (int i = 0; i < point_count; ++i) {
+			rand_vector[i] = normalize(Vector3d::random_fixed(-1, 1));
+		}
+		
+		perm_x = perlin_generate_perm();
+		perm_y = perlin_generate_perm();
+		perm_z = perlin_generate_perm();
+	}
+	
+	~PerlinNoise() {
+		delete[] rand_vector;
+		delete[] perm_x;
+		delete[] perm_y;
+		delete[] perm_z;
+	}
+	
+	double turbulence(const Point &p, int sample_depth = 7) const {
+		// initialize
+		auto sum = 0.0;
+		auto cur_point = p;
+		auto weight = 1.0;
+		
+		// weighted sum of samples
+		for (int i = 0; i < sample_depth; i++) {
+			sum += weight * noise(cur_point);
+			weight *= 0.5;
+			cur_point *= 2;
+		}
+		return fabs(sum);
+	}
+	
+	double noise(const Point &p) const {
+		// only one sample from perlin noise
+		auto u = p.x() - floor(p.x());
+		auto v = p.y() - floor(p.y());
+		auto w = p.z() - floor(p.z());
+		auto i = static_cast<int>(floor(p.x()));
+		auto j = static_cast<int>(floor(p.y()));
+		auto k = static_cast<int>(floor(p.z()));
+		Vector3d c[2][2][2];
+		
+		for (int di = 0; di < 2; di++)
+		for (int dj = 0; dj < 2; dj++)
+		for (int dk = 0; dk < 2; dk++)
+		c[di][dj][dk] = rand_vector[
+		perm_x[(i + di) & 255] ^
+		perm_y[(j + dj) & 255] ^
+		perm_z[(k + dk) & 255]];
+		
+		// tri-linear interpolation
+		return perlin_interpolation(c, u, v, w);
+	}
+	
+	private:
+	static const int point_count = 256;
+	Vector3d *rand_vector;
+	int *perm_x;
+	int *perm_y;
+	int *perm_z;
+	
+	static int *perlin_generate_perm() {
+		auto p = new int[point_count];
+		for (int i = 0; i < PerlinNoise::point_count; i++)
+		p[i] = i;
+		permute(p, point_count);
+		return p;
+	}
+	
+	static void permute(int *p, int n) {
+		for (int i = n - 1; i > 0; i--) {
+			int target = random_int_fixed(0, i);
+			int tmp = p[i];
+			p[i] = p[target];
+			p[target] = tmp;
+		}
+	}
+	
+	static double perlin_interpolation(Vector3d c[2][2][2], double u, double v, double w) {
+		// hermite smoothing to eliminate Mach Band
+		auto uu = u * u * (3 - 2 * u);
+		auto vv = v * v * (3 - 2 * v);
+		auto ww = w * w * (3 - 2 * w);
+		
+		// interpolate
+		auto accum = 0.0;
+		for (int i = 0; i < 2; i++)
+		for (int j = 0; j < 2; j++)
+		for (int k = 0; k < 2; k++) {
+			Vector3d weight_v(u - i, v - j, w - k);
+			accum += (i * uu + (1 - i) * (1 - uu))
+			* (j * vv + (1 - j) * (1 - vv))
+			* (k * ww + (1 - k) * (1 - ww))
+			* dot(c[i][j][k], weight_v);
+		}
+		return accum;
+	}
+};
+
+#endif //PROJECT_PERLIN_H
+
+\end{lstlisting}
+This file defines a simple Perlin Noise Generator. Perlin Noise is a technique often used in procedural texture generation. In this project, it is used to generate marble texture.
+
 
 \subsection{Basic Datatypes}
 
