@@ -723,6 +723,276 @@ This file defines a simple Perlin Noise Generator. Perlin Noise is a technique o
 
 \subsection{Basic Datatypes}
 
+\subsubsection{Ray (src/core/Ray.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-09.
+// This file contains the definition of Ray.
+//
+
+#ifndef PROJECT_RAY_H
+#define PROJECT_RAY_H
+
+class Ray {
+	public:
+	Ray() : o(), d(), tm{} {}
+	
+	Ray(const Point &origin, const Vector3d &direction, double time = 0.0, bool _is_camera_ray = false) :
+	o(origin), d(direction), tm(time), is_camera_ray(_is_camera_ray) {}
+	
+	// utils
+	Point origin() const { return o; }
+	
+	Vector3d direction() const { return d; }
+	
+	double time() const { return tm; }
+	
+	bool camera_ray() const { return is_camera_ray; }
+	
+	Point at(double t) const { return o + t * d; }
+	
+	private:
+	// origin and direction
+	Point o;
+	Vector3d d;
+	double tm;
+	bool is_camera_ray{false};
+};
+
+
+#endif //PROJECT_RAY_H
+
+\end{lstlisting}
+This file defines Ray. Each ray has an origin, a direction and a timestamp. The timestamp is used in motion blur. Also, $is\_camera\_ray$ here is used in skybox to separate visual effect from real lighting effect.
+
+\subsubsection{Pixel (src/core/Pixel.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-09.
+// This file contains the definition of Pixel.
+//
+
+#ifndef PROJECT_PIXEL_H
+#define PROJECT_PIXEL_H
+
+class Pixel {
+	public:
+	Pixel() : pixel_color(), write_flag(false), sample_count(1) {}
+	
+	void set(const Color &color, int samples_per_pixel) {
+		pixel_color = color;
+		sample_count = samples_per_pixel;
+	}
+	
+	Color get_color() const { return pixel_color; }
+	
+	int get_sample_count() const { return sample_count; }
+	
+	void write(std::ofstream &out) {
+		// a pixel can only be written once for correctness
+		if (!write_flag) {
+			write_flag = true;
+		} else {
+			throw std::runtime_error("A pixel is written twice");
+		}
+		
+		// divide by sample count and gamma correct
+		auto r = pixel_color.x();
+		auto g = pixel_color.y();
+		auto b = pixel_color.z();
+		auto scale = 1.0 / sample_count;
+		r = sqrt(scale * r);
+		g = sqrt(scale * g);
+		b = sqrt(scale * b);
+		
+		// scale to [0, 255] and output
+		out << static_cast<int>(256 * clamp(r, 0.0, 0.999)) << ' '
+		<< static_cast<int>(256 * clamp(g, 0.0, 0.999)) << ' '
+		<< static_cast<int>(256 * clamp(b, 0.0, 0.999)) << '\n';
+	}
+	
+	private:
+	bool write_flag;
+	Color pixel_color;
+	int sample_count;
+};
+
+#endif //PROJECT_PIXEL_H
+\end{lstlisting}
+This file defines Pixel, a data structure that is responsible for writing pixel into files. Note that in line 30 - 37 we add a simple Gamma correction to make the image more realistic.
+
+\subsubsection{Hit (src/core/Hit.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_HIT_H
+#define PROJECT_HIT_H
+
+struct Hit {
+	Point hit_point;
+	Vector3d normal;
+	std::shared_ptr<Material> mat_ptr;
+	double t{0};
+	double u{0};
+	double v{0};
+	bool front_face{false};
+	// 0: diffuse, 1: reflect, 2: refract, 3: isotropic
+	int scatter_mode{-1};
+	int remaining_bounce{-1};
+	
+	inline void set_face_normal(const Ray &r, const Vector3d &n) {
+		front_face = (dot(r.direction(), n) < 0);
+		normal = front_face ? n : -n;
+	}
+};
+
+#endif //PROJECT_HIT_H
+
+\end{lstlisting}
+This data structure contains everything needed to be stored when a hit happens.
+
+\subsubsection{AABB (src/core/AABB.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-15.
+//
+
+#ifndef PROJECT_AABB_H
+#define PROJECT_AABB_H
+
+class AABB {
+	public:
+	AABB() = default;
+	
+	AABB(const Point &min, const Point &max) : minimum(min), maximum(max) {}
+	
+	Point min() const { return minimum; }
+	
+	Point max() const { return maximum; }
+	
+	inline bool hit(const Ray &ray, double t_min, double t_max) const {
+		// an optimized slab method (Andrew Kensler at Pixar)
+		for (int a = 0; a < 3; a++) {
+			auto invD = 1.0f / ray.direction()[a];
+			auto t0 = (min()[a] - ray.origin()[a]) * invD;
+			auto t1 = (max()[a] - ray.origin()[a]) * invD;
+			if (invD < 0.0f)
+			std::swap(t0, t1);
+			t_min = t0 > t_min ? t0 : t_min;
+			t_max = t1 < t_max ? t1 : t_max;
+			if (t_max <= t_min)
+			return false;
+		}
+		return true;
+	}
+	
+	inline int longest_axis() const {
+		Vector3d length = maximum - minimum;
+		if (length[0] >= length[1] && length[0] >= length[2])
+		return 0;
+		else if (length[1] >= length[0] && length[1] >= length[2])
+		return 1;
+		else
+		return 2;
+	}
+	
+	inline double area() const {
+		Vector3d length = maximum - minimum;
+		return 2 * (length[0] * length[1] +
+		length[0] * length[2] +
+		length[1] * length[2]);
+	}
+	
+	private:
+	// ranges in three directions (i.e. two points in diagonal)
+	Point minimum;
+	Point maximum;
+};
+
+AABB surrounding_box(AABB box0, AABB box1) {
+	Point min(fmin(box0.min().x(), box1.min().x()),
+	fmin(box0.min().y(), box1.min().y()),
+	fmin(box0.min().z(), box1.min().z()));
+	
+	Point max(fmax(box0.max().x(), box1.max().x()),
+	fmax(box0.max().y(), box1.max().y()),
+	fmax(box0.max().z(), box1.max().z()));
+	
+	return {min, max};
+}
+
+#endif //PROJECT_AABB_H
+
+\end{lstlisting}
+AABB is abbreviation of axis-aligned-bounding-box, which is used in BVH. Here, $area()$ and $longest\_axis()$ are used in SAH (surface area heuristic) to make the BVH more balanced spatially.
+
+\subsubsection{Photon (src/core/Photon.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-29.
+//
+
+#ifndef PROJECT_PHOTON_H
+#define PROJECT_PHOTON_H
+
+struct Photon {
+	public:
+	Photon() = default;
+	
+	Photon(Vector3d pos, Vector3d dir, Vector3d _power, int _axis = 0)
+	: position(pos), direction(dir), power(_power), axis(_axis) {}
+	
+	public:
+	Vector3d position;
+	Vector3d direction;
+	Vector3d power; // in color
+	int axis{0};
+};
+
+#endif //PROJECT_PHOTON_H
+
+\end{lstlisting}
+This file contains definition of Photon. A photon stores light intensity at given position. It is generated in forward pass (photon map generation) of Photon Mapping and used in backward pass.
+
+\subsubsection{NearestPhotons (src/core/NearestPhotons.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-29.
+//
+
+#ifndef PROJECT_NEARESTPHOTONS_H
+#define PROJECT_NEARESTPHOTONS_H
+
+struct NearestPhotons {
+	public:
+	NearestPhotons() {
+		max_photons = 0;
+		found_photons = 0;
+		heap_full = false;
+		dist_square = nullptr;
+		photons = nullptr;
+	}
+	
+	~NearestPhotons() {
+		delete[] dist_square;
+		delete[] photons;
+	}
+	
+	public:
+	Vector3d pos;
+	int max_photons, found_photons;
+	bool heap_full;
+	double* dist_square;
+	Photon** photons;
+};
+
+#endif //PROJECT_NEARESTPHOTONS_H
+
+\end{lstlisting}
+NearestPhotons is a data structure that store nearest photons at given position. It is generated from full PhotonMap and used to determine light intensity at a given point on diffuse surface. 
+
 \subsection{External Libraries}
 
 
