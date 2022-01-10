@@ -1584,6 +1584,155 @@ cv2.imwrite('1.jpg', i)
 \end{lstlisting}
 
 \subsection{Integrator}
+\subsubsection{Base Integrator (src/core/Integrator.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-15.
+//
+
+#ifndef PROJECT_INTEGRATOR_H
+#define PROJECT_INTEGRATOR_H
+
+class Integrator {
+	public:
+	Integrator() = delete;
+	
+	explicit Integrator(const Accelerator &scene, const Skybox &_skybox)
+	: world(scene), skybox(_skybox) {}
+	
+	virtual Color cast_ray(const Ray &r, int remaining_bounce) const = 0;
+	
+	protected:
+	const Accelerator &world;
+	const Skybox &skybox;
+};
+
+#endif //PROJECT_INTEGRATOR_H
+
+\end{lstlisting}
+This is the base class for all integrators. A integrator integrate light intensity along given light path and returns raw pixel color. $world$ represents the whole scene (usually a BVH node) and $skybox$ is a global (usually uniform) light source. Typical integrators include Path Tracing, Photon Mapping, Progressive Photon Mapping, etc. In this project we only implement the first two.
+
+\subsubsection{Path Tracing Integrator (src/integrator/PathTracingIntegrator.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_PATHTRACINGINTEGRATOR_H
+#define PROJECT_PATHTRACINGINTEGRATOR_H
+
+class PathTracingIntegrator : Integrator {
+	public:
+	PathTracingIntegrator() = delete;
+	
+	explicit PathTracingIntegrator(const Accelerator &scene, const Skybox &skybox)
+	: Integrator(scene, skybox) {}
+	
+	Color cast_ray(const Ray &r, int remaining_bounce) const override {
+		Hit hit;
+		
+		// If we've exceeded the ray bounce limit, no more light is gathered.
+		if (remaining_bounce <= 0) return {0, 0, 0};
+		hit.remaining_bounce = remaining_bounce;
+		
+		// If hit nothing, return background
+		if (!world.hit(r, TMIN, inf, hit)) return skybox.get_color(r);
+		
+		// hit something
+		Ray scattered_ray;
+		Color emit_color = hit.mat_ptr->emit(hit.u, hit.v, hit.hit_point);
+		
+		// no scattering
+		if (!hit.mat_ptr->scatter(r, hit, scattered_ray))
+		return emit_color;
+		
+		// scattering
+		Color attenuation = hit.mat_ptr->brdf(r, scattered_ray, hit);
+		Color scatter_color = cast_ray(scattered_ray, remaining_bounce - 1);
+		return emit_color + attenuation * scatter_color;
+	}
+};
+
+#endif //PROJECT_PATHTRACINGINTEGRATOR_H
+
+\end{lstlisting}
+A Path Tracing integrator reflects and refracts just like normal Ray Tracing integrator. However, when a ray hits a diffuse surface (e.g. Lambertian), instead of sending test rays enumerating lights, path tracing samples a random reflection direction with cos probability and trace the resulting ray. In our implementation, sampling is done in Material. Therefore, Path Tracing Integrator is very short and neat.
+
+\subsubsection{Photon Mapping Integrator (src/integrator/PhotonMappingIntegrator.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-29.
+//
+
+#ifndef PROJECT_PHOTONMAPPINGINTEGRATOR_H
+#define PROJECT_PHOTONMAPPINGINTEGRATOR_H
+
+class PhotonMappingIntegrator : public Integrator {
+	public:
+	PhotonMappingIntegrator(const Accelerator &scene, const Skybox &skybox, std::shared_ptr<PhotonMap> _map)
+	: Integrator(scene, skybox), photon_map(std::move(_map)) {}
+	
+	Color cast_ray(const Ray &r, int remaining_bounce) const override {
+		Hit hit;
+		if (world.hit(r, TMIN, inf, hit)) {
+			Ray scattered_ray;
+			Color emit_color = hit.mat_ptr->emit(hit.u, hit.v, hit.hit_point);
+			if (remaining_bounce >= 0 && hit.mat_ptr->scatter(r, hit, scattered_ray)) {
+				auto attenuation = hit.mat_ptr->brdf(r, scattered_ray, hit);
+				Color light_color;
+				if (hit.scatter_mode == 0) {
+					light_color = photon_map->get_irradiance(hit.hit_point, hit.normal, 0.1, 50);
+				} else {
+					light_color = cast_ray(scattered_ray, remaining_bounce - 1);
+				}
+				return emit_color + light_color * attenuation;
+			} else {
+				return emit_color;
+			}
+		} else {
+			return skybox.get_color(r);
+		}
+	}
+	
+	void trace_photon(const Ray &ray, int remaining_bounce, Vector3d power) {
+		Hit hit;
+		if (world.hit(ray, TMIN, inf, hit)) {
+			Ray scattered_ray;
+			if (remaining_bounce > 0 && hit.mat_ptr->scatter(ray, hit, scattered_ray)) {
+				// store photon at diffuse surface
+				if (hit.scatter_mode == 0) {
+					photon_map->store(Photon(hit.hit_point, ray.direction(), power));
+				}
+				// generate a new photon
+				Color attenuation = hit.mat_ptr->brdf(ray, scattered_ray, hit);
+				trace_photon(scattered_ray, remaining_bounce - 1, power * attenuation);
+			}
+		}
+	}
+	
+	void trace_photon_caustic(const Ray &ray, int remaining_bounce, Vector3d power) {
+		Hit hit;
+		if (world.hit(ray, TMIN, inf, hit)) {
+			Ray scattered_ray;
+			if (remaining_bounce > 0 && hit.mat_ptr->scatter(ray, hit, scattered_ray)) {
+				if (hit.scatter_mode == 1 || hit.scatter_mode == 2) {
+					trace_photon(scattered_ray, remaining_bounce - 1, power);
+				} else {
+					if (remaining_bounce == 10) return;
+					photon_map->store(Photon(hit.hit_point, ray.direction(), power));
+				}
+			}
+		}
+	}
+	
+	private:
+	std::shared_ptr<PhotonMap> photon_map;
+};
+
+#endif //PROJECT_PHOTONMAPPINGINTEGRATOR_H
+
+\end{lstlisting}
+Photon Mapping is also known as Photon Mapping Path Tracing (PMPT). Different from normal Path Tracing integrators, instead of sampling a random direction at every diffuse surface, it queries a photon map for light intensity information, which gives faster convergence when light is very small. PM has two passes. The first pass is forward path tracing. It sends out rays (i.e. photons) from every light in the scene, let them reflect and refract and store their intensity and position whenever they hit a diffuse surface. Forward ray tracing builds up a photon map (a Kd-tree of <position, intensity> tuples). The second pass is backward path tracing, this pass is identical to normal Path Tracing except that it queries the photon map and uses nearest photons' intensity as light intensity of diffuse hit-point. Note that we need to set a max radius for nearest photon query to prevent points in shadows being lit by faraway photons.
 
 \subsection{Accelerator}
 
