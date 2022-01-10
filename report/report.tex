@@ -1980,6 +1980,52 @@ This file contains a BVH accelerator. It can be initialized using HittableList. 
 In general, Kd-Tree can also be used in accelerating hit calculation. However, since we have a very fast BVH based on AABB and SAH, we no longer need Kd-Tree for this purpose. Instead, Kd-Tree is used in Photon Map for fast nearest neighbor calculation. For details see 5.2.7.
 
 \subsection{Hardware Acceleration}
+\large \textbf{main.cpp} \normalsize
+\begin{lstlisting}[style=CStyle]
+    // launch real renderer
+#if defined(WINDOWS)
+
+if (max_processes == 1) {
+	render_scene(0, 1, "1.ppm");
+} else {
+	omp_set_num_threads(max_processes);
+	#pragma omp parallel for
+	for (int thread_idx = 0; thread_idx < max_processes; ++thread_idx) {
+		std::string file_name = std::to_string(thread_idx) + ".partial";
+		render_scene(thread_idx, max_processes, file_name.c_str());
+	}
+}
+
+#else
+
+if (max_processes == 1) {
+	render_scene(0, 1, "1.ppm");
+} else {
+	std::vector<pid_t> pid_list;
+	for (int process_idx = 0; process_idx < max_processes; ++process_idx) {
+		std::string file_name = std::to_string(process_idx) + ".partial";
+		pid_t pid = fork();
+		if (pid != 0) {
+			// parent
+			pid_list.push_back(pid);
+			continue;
+		} else {
+			// child
+			std::cerr << "Worker " << process_idx << " initialized on " << pid << std::endl;
+			render_scene(process_idx, max_processes, file_name.c_str());
+			return 0;
+		}
+	}
+	for (auto pid: pid_list) {
+		waitpid(pid, NULL, 0);
+	}
+}
+
+#endif
+\end{lstlisting}
+For ray tracing, the most natural way of hardware acceleration is GPU acceleration, especially by using RT cores in NVIDIA GPUs. However, GPU acceleration requires coding with CUDA and managing VRAM, which is more complicated and harder to debug. Therefore, in our implementation we use CPU multi-processing (or multi-threading). This acceleration method is quite straightforward and requires only minor changes to the code (tens of lines).
+
+For Windows platforms, we use OpenMP to spawn multiple render worker threads. By adding only one line, we can achieve almost linear acceleration. However, for Linux based OS, things are a little bit trickier. C++ standard libraries have locks within its implementation (global, thread-wise lock). It will block access from other threads even if all accesses are read accesses. The result is that all cores are busy waiting and no acceleration is achieved. Therefore, for Linux, we use multiprocessing. Render worker processes are forked from main process and gathered after exit. In this way, we can still achieve linear acceleration. For all experiments, we run the renderer with 80 workers on a server with 128 cores and 512GB memory. Hardware acceleration makes things faster about 80x.
 
 \section{References}
 \noindent
