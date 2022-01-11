@@ -3223,6 +3223,482 @@ class RotateY : public Hittable {
 We does not implement general rotation using matrix multiplication. Instead, we only implement around axis rotation, using code similar to that of Ray Tracing Mini-books.
 
 \section{Materials $\&$ Textures}
+\subsection{Materials}
+\subsubsection{Base Material (src/core/Material.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-11.
+//
+
+#ifndef PROJECT_MATERIAL_H
+#define PROJECT_MATERIAL_H
+
+class Hit;
+
+class Material {
+	public:
+	virtual bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const = 0;
+	
+	virtual Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const = 0;
+	
+	virtual Color emit(double u, double v, const Point &p) const {
+		return {0, 0, 0};
+	};
+	
+};
+
+#endif //PROJECT_MATERIAL_H
+
+\end{lstlisting}
+This is base class for materials. Every material has a $scatter$ function that computes scattered rays (i.e. reflection, refraction, etc.), a $brdf$ function that computes its response to illumination and a $emit$ function that computes self-emission.
+
+\subsubsection{Lambertian (src/material/Lambertian.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_LAMBERTIAN_H
+#define PROJECT_LAMBERTIAN_H
+
+class Lambertian : public Material {
+	public:
+	explicit Lambertian(const Color &a) : albedo(std::make_shared<ColorTexture>(a)) {}
+	
+	explicit Lambertian(std::shared_ptr<Texture> a) : albedo(std::move(a)) {}
+	
+	bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
+		// get scatter direction
+		auto scatter_direction = hit.normal + random_unit_vector();
+		if (scatter_direction.near_zero())
+		scatter_direction = hit.normal;
+		
+		// generate scattered rays
+		scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
+		hit.scatter_mode = 0;
+		return true;
+	}
+	
+	Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
+		return albedo->uv_color(hit.u, hit.v, hit.hit_point);
+	}
+	
+	private:
+	std::shared_ptr<Texture> albedo;
+};
+
+#endif //PROJECT_LAMBERTIAN_H
+
+\end{lstlisting}
+Lambertian is a material that simulate matte, i.e. complete diffuse surface. It scatter rays with direction that follows cos probability distribution. The BRDF function is just the material's albedo.
+
+\subsubsection{Metal (src/material/Metal.h)}
+\begin{lstlisting} [style=CStyle]
+#include <utility>
+
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_METAL_H
+#define PROJECT_METAL_H
+
+class Metal : public Material {
+	public:
+	Metal(const Color &a, double f) : albedo(std::make_shared<ColorTexture>(a)), fuzz(f < 1 ? f : 1) {}
+	
+	Metal(std::shared_ptr<Texture> a, double f) : albedo(std::move(a)), fuzz(f < 1 ? f : 1) {}
+	
+	bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
+		// get reflected direction (include perturbation for imperfect reflection)
+		Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
+		reflected_dir += fuzz * random_in_unit_sphere();
+		
+		// generate rays
+		scattered_ray = Ray(hit.hit_point, reflected_dir, ray_in.time());
+		hit.scatter_mode = 1;
+		return (dot(reflected_dir, hit.normal) > 0);
+	}
+	
+	Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
+		return albedo->uv_color(hit.u, hit.v, hit.hit_point);
+	}
+	
+	private:
+	std::shared_ptr<Texture> albedo;
+	double fuzz;
+};
+
+#endif //PROJECT_METAL_H
+
+\end{lstlisting}
+Metal simulates complete reflection surface. We can use $fuzz$ to control reflection perfectness. $fuzz=0$ means perfect reflection and $fuzz=1$ means very fuzzy imperfect reflection.
+
+\subsubsection{Dielectric (src/material/Dielectric.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_DIELECTRIC_H
+#define PROJECT_DIELECTRIC_H
+
+class Dielectric : public Material {
+	public:
+	explicit Dielectric(double index_of_refraction, Color tf = Vector3d(1, 1, 1))
+	: ir(index_of_refraction), transmission_filter(tf) {}
+	
+	bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
+		// calculate parameters
+		double refraction_ratio = hit.front_face ? (1.0 / ir) : ir;
+		
+		Vector3d unit_direction = normalize(ray_in.direction());
+		double cos_theta = fmin(dot(-unit_direction, hit.normal), 1.0);
+		double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+		
+		// generate new ray's direction
+		bool cannot_refract = refraction_ratio * sin_theta > 1.0;
+		Vector3d direction;
+		if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double()) {
+			direction = reflect(unit_direction, hit.normal);
+			hit.scatter_mode = 1;
+		} else {
+			direction = refract(unit_direction, hit.normal, refraction_ratio);
+			hit.scatter_mode = 2;
+		}
+		
+		
+		scattered_ray = Ray(hit.hit_point, direction, ray_in.time());
+		return true;
+	}
+	
+	Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
+		return transmission_filter;
+	}
+	
+	private:
+	// eta of this material (index of refraction)
+	double ir;
+	Color transmission_filter{1.0, 1.0, 1.0};
+	
+	static double reflectance(double cosine, double ref_idx) {
+		// Use Schlick's approximation for reflectance.
+		auto r0 = (1 - ref_idx) / (1 + ref_idx);
+		r0 = r0 * r0;
+		return r0 + (1 - r0) * pow((1 - cosine), 5);
+	}
+};
+
+#endif //PROJECT_DIELECTRIC_H
+
+\end{lstlisting}
+Dielectric simulates translucent materials. Light in general refracts at the surface. However, if the input ray grazes the surface, i.e. the direction is almost parallel to the surface, reflection, instead of refraction, will happen. Dielectric also simulates this effect in out implementation.
+
+\subsubsection{PBR Material (src/material/PBRMaterial.h)}
+\begin{lstlisting} [style=CStyle]
+#include <utility>
+
+//
+// Created by meiyixuan on 2021-12-22.
+//
+
+#ifndef PROJECT_PBRMATERIAL_H
+#define PROJECT_PBRMATERIAL_H
+
+class PBRMaterial : public Material {
+	public:
+	PBRMaterial(std::string name, const std::string &mat_pth,
+	Color _kd, const std::string &diffuse_map_name,
+	Color _ks, double _shininess, const std::string &specular_map_name,
+	Color _ke, const std::string &emission_map_name,
+	double _ir, Color _tf, double _dissolve,
+	double _light_sample_probability = 0, Vector3d _sun_dir = Vector3d())
+	: material_name(std::move(name)),
+	kd(_kd),
+	diffuse_texture(diffuse_map_name.empty() ? nullptr :
+	std::make_shared<ImageTexture>((mat_pth + diffuse_map_name).c_str())),
+	ks(_ks), shininess(_shininess),
+	specular_texture(specular_map_name.empty() ? nullptr :
+	std::make_shared<ImageTexture>((mat_pth + specular_map_name).c_str())),
+	ke(_ke), emission_texture(emission_map_name.empty() ? nullptr :
+	std::make_shared<ImageTexture>((mat_pth + emission_map_name).c_str())),
+	ir(_ir), transmission_filter(_tf), dissolve(_dissolve),
+	sample_light_prob(_light_sample_probability), sun_dir(_sun_dir) {
+		auto kd_len = kd.squared_length();
+		auto ks_len = ks.squared_length();
+		auto total_energy = kd_len + ks_len + EPSILON;
+		prob_refract = 1 - dissolve;
+		prob_diffuse = dissolve * kd_len / total_energy;
+		prob_specular = dissolve * ks_len / total_energy;
+	}
+	
+	Color emit(double u, double v, const Point &p) const override {
+		return ke * (emission_texture ? emission_texture->uv_color(u, v, p) : Color(1, 1, 1));
+	}
+	
+	bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
+		auto mode = scatter_type();
+		if (mode == 0) {
+			// mode = 0: defuse material
+			if (hit.remaining_bounce == 1) {
+				// sample to light direction at last bounce
+				// get scatter direction
+				auto scatter_direction = sun_dir;
+				if (dot(scatter_direction, hit.normal) <= 0)
+				scatter_direction = hit.normal + random_unit_vector();
+				if (scatter_direction.near_zero())
+				scatter_direction = hit.normal;
+				// generate scattered rays
+				scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
+				hit.scatter_mode = 0;
+				return true;
+			}
+			if (random_double() > sample_light_prob) {
+				// a random direction sampler
+				// get scatter direction
+				auto scatter_direction = hit.normal + random_unit_vector();
+				if (scatter_direction.near_zero())
+				scatter_direction = hit.normal;
+				// generate scattered rays
+				scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
+				hit.scatter_mode = 0;
+				return true;
+			} else {
+				// sample more light for better convergence
+				// get scatter direction
+				auto scatter_direction = sun_dir + 0.02 * random_in_unit_sphere();
+				if (dot(scatter_direction, hit.normal) <= 0)
+				scatter_direction = hit.normal + random_unit_vector();
+				if (scatter_direction.near_zero())
+				scatter_direction = hit.normal;
+				// generate scattered rays
+				scattered_ray = Ray(hit.hit_point, scatter_direction, ray_in.time());
+				hit.scatter_mode = 0;
+				return true;
+			}
+		} else if (mode == 1) {
+			// get reflected direction (include perturbation for imperfect reflection)
+			Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
+			// reflected_dir += random_in_unit_sphere();
+			
+			// generate rays
+			scattered_ray = Ray(hit.hit_point, reflected_dir, ray_in.time());
+			hit.scatter_mode = 1;
+			return (dot(reflected_dir, hit.normal) > 0);
+		} else if (mode == 2) {
+			// calculate parameters
+			double refraction_ratio = hit.front_face ? (1.0 / ir) : ir;
+			
+			Vector3d unit_direction = normalize(ray_in.direction());
+			double cos_theta = fmin(dot(-unit_direction, hit.normal), 1.0);
+			double sin_theta = sqrt(1.0 - cos_theta * cos_theta);
+			
+			// generate new ray's direction
+			bool cannot_refract = refraction_ratio * sin_theta > 1.0;
+			Vector3d direction;
+			if (cannot_refract || reflectance(cos_theta, refraction_ratio) > random_double()) {
+				direction = reflect(unit_direction, hit.normal);
+				hit.scatter_mode = 1;
+			} else {
+				direction = refract(unit_direction, hit.normal, refraction_ratio);
+				hit.scatter_mode = 2;
+			}
+			scattered_ray = Ray(hit.hit_point, direction, ray_in.time());
+			return true;
+		} else {
+			std::cerr << "Unknown scatter type!" << std::endl;
+			return false;
+		}
+	}
+	
+	inline Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
+		// Phong
+		if (hit.scatter_mode == 0 || hit.scatter_mode == 1) {
+			auto diffuse_color = diffuse_texture ? kd * diffuse_texture->uv_color(hit.u, hit.v, hit.hit_point)
+			: kd;
+			auto specular_color_base = specular_texture ? ks * specular_texture->uv_color(hit.u, hit.v, hit.hit_point)
+			: ks;
+			Vector3d reflected_dir = reflect(normalize(ray_in.direction()), hit.normal);
+			auto specular_exponent = pow(dot(reflected_dir, normalize(ray_out.direction())), shininess)
+			/ dot(hit.normal, -normalize(ray_in.direction()));
+			specular_exponent = fmax(EPSILON * EPSILON, specular_exponent);
+			specular_exponent = fmin(5.0, specular_exponent);
+			//            if (random_double() < 0.0000001)
+			//                std::cerr << "specular_exponent " << specular_exponent << std::endl;
+			
+			return diffuse_color + specular_color_base * specular_exponent;
+		} else if (hit.scatter_mode == 2) {
+			return transmission_filter;
+		} else {
+			std::cerr << "Unknown scatter mode" << std::endl;
+			return {0, 1, 1};
+		}
+	}
+	
+	private:
+	// basic property
+	std::string material_name;
+	
+	// diffuse
+	Color kd;
+	std::shared_ptr<Texture> diffuse_texture;
+	double prob_diffuse;
+	
+	// specular
+	Color ks;
+	double shininess; // specular exponent
+	std::shared_ptr<Texture> specular_texture;
+	double prob_specular;
+	
+	// refraction
+	double ir;  // dielectric's eta of refraction
+	Color transmission_filter;  // attenuation to refracted ray
+	double dissolve;
+	double prob_refract;
+	
+	// emission
+	Color ke;
+	std::shared_ptr<Texture> emission_texture;
+	
+	// sampler
+	double sample_light_prob{0};
+	Vector3d sun_dir;
+	
+	int scatter_type() const {
+		// 0 diffuse, 1 reflect, 2 refract
+		auto val = random_double();
+		if (val <= prob_diffuse) return 0;
+		else if (val <= prob_diffuse + prob_specular) return 1;
+		else return 2;
+	}
+	
+	static double reflectance(double cosine, double ref_idx) {
+		// Use Schlick's approximation for reflectance.
+		auto r0 = (1 - ref_idx) / (1 + ref_idx);
+		r0 = r0 * r0;
+		return r0 + (1 - r0) * pow((1 - cosine), 5);
+	}
+	
+};
+
+#endif //PROJECT_PBRMATERIAL_H
+
+\end{lstlisting}
+PBR material is a material that have diffuse, reflection and refraction. It also supports image textures for every scatter mode. The lighting model is Phong. PBRMaterial is supposed to be used when importing materials from .mtl files.
+
+\subsubsection{Isotropic (src/material/Isotropic.h)}
+\begin{lstlisting} [style=CStyle]
+#include <utility>
+
+//
+// Created by meiyixuan on 2021-12-19.
+//
+
+#ifndef PROJECT_ISOTROPIC_H
+#define PROJECT_ISOTROPIC_H
+
+class Isotropic : public Material {
+	public:
+	explicit Isotropic(Color color) : albedo(std::make_shared<ColorTexture>(color)) {}
+	
+	explicit Isotropic(std::shared_ptr<Texture> texture) : albedo(std::move(texture)) {}
+	
+	bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
+		scattered_ray = Ray(hit.hit_point, random_in_unit_sphere(), ray_in.time());
+		hit.scatter_mode = 3;
+		return true;
+	}
+	
+	Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
+		return albedo->uv_color(hit.u, hit.v, hit.hit_point);
+	}
+	
+	private:
+	std::shared_ptr<Texture> albedo;
+};
+
+#endif //PROJECT_ISOTROPIC_H
+
+\end{lstlisting}
+Isotropic material is used in participating media for volumetric rendering. It scatters the input ray to a random direction (i.e. isotropically).
+
+\subsubsection{Diffuse Light (src/light/DiffuseLight.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_DIFFUSELIGHT_H
+#define PROJECT_DIFFUSELIGHT_H
+
+class DiffuseLight : public Light {
+	public:
+	explicit DiffuseLight(std::shared_ptr<Texture> texture, double _intensity = 1)
+	: emit_texture(std::move(texture)), intensity(_intensity) {}
+	
+	explicit DiffuseLight(Color emit_color, double _intensity = 1) :
+	emit_texture(std::make_shared<ColorTexture>(emit_color)),
+	intensity(_intensity) {}
+	
+	bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override {
+		// lights don't scatter
+		return false;
+	}
+	
+	Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override {
+		// no brdf
+		return {0, 0, 0};
+	}
+	
+	Color emit(double u, double v, const Point &p) const override {
+		return emit_texture->uv_color(u, v, p) * intensity;
+	}
+	
+	private:
+	std::shared_ptr<Texture> emit_texture;
+	double intensity{1};
+};
+
+#endif //PROJECT_DIFFUSELIGHT_H
+
+\end{lstlisting}
+This material simulates a light that emits according to $emit\_texture$.
+
+\subsubsection{Bump Material (src/material/BumpMaterial.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-25.
+//
+
+#ifndef PROJECT_BUMPMATERIAL_H
+#define PROJECT_BUMPMATERIAL_H
+
+class BumpMaterial : public Material {
+	public:
+	BumpMaterial() = default;
+	
+	BumpMaterial(const std::string &mat_pth, const std::string &bump_map_name, int bump_map_type)
+	: bump_map(bump_map_name.empty() ? nullptr :
+	std::make_shared<BumpTexture>((mat_pth + bump_map_name).c_str(),
+	bump_map_type)) {}
+	
+	bool scatter(const Ray &ray_in, Hit &hit, Ray &scattered_ray) const override { return false; }
+	
+	Color brdf(const Ray &ray_in, const Ray &ray_out, const Hit &hit) const override { return {}; }
+	
+	Vector3d get_normal(double u, double v) {
+		return bump_map->get_normal(u, v);
+	}
+	
+	private:
+	std::shared_ptr<BumpTexture> bump_map;
+};
+
+#endif //PROJECT_BUMPMATERIAL_H
+
+\end{lstlisting}
+Rigorously speaking, bump material is not a material, since it is not used for rendering. This material contains a $bump\_map$ texture that is applied to the surface normal of models. It changes surface normals and adds detail without modifying model geometry. For detailed implementation of bump map, see section 8.2.
+
 
 \section{References}
 \noindent

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2021.3.16)  10 JAN 2022 17:22
+This is XeTeX, Version 3.14159265-2.6-0.999992 (TeX Live 2020/W32TeX) (preloaded format=xelatex 2021.3.16)  11 JAN 2022 10:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -380,14 +380,15 @@ File: lstmisc.sty 2020/03/24 1.8d (Carsten Heinz)
 [15] [16] [17] [18] [19] [20] [21] [22] [23] [24] [25] [26] [27] [28] [29]
 [30] [31] [32] [33] [34] [35] [36] [37] [38] [39] [40] [41] [42] [43] [44]
 [45] [46] [47] [48] [49] [50] [51] [52] [53] [54] [55] [56] [57] [58] [59]
-[60] [61] [62] [63] [64] [65] (./report.aux) ) 
+[60] [61] [62] [63] [64] [65] [66] [67] [68] [69] [70] [71] [72] [73] [74]
+(./report.aux) ) 
 Here is how much of TeX's memory you used:
- 6662 strings out of 476938
- 96766 string characters out of 5824345
+ 6802 strings out of 476938
+ 99010 string characters out of 5824345
  1009936 words of memory out of 5000000
- 26553 multiletter control sequences out of 15000+600000
+ 26693 multiletter control sequences out of 15000+600000
  411431 words of font info for 73 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  68i,6n,74p,948b,1604s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on report.pdf (65 pages).
+Output written on report.pdf (74 pages).
