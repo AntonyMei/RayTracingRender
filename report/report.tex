@@ -4045,6 +4045,1170 @@ Bump texture stores perturbation to surface normal. When we talk about bump map,
 
 \section{Visual Effects}
 \subsection{Camera Effects}
+\subsubsection{Base Camera (src/core/Camera.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-11.
+//
+
+#ifndef PROJECT_CAMERA_H
+#define PROJECT_CAMERA_H
+
+class Camera {
+	public:
+	virtual Ray get_ray(double u, double v) const = 0;
+	
+	protected:
+	// camera extrinsic
+	Point origin;
+	Point lower_left_corner;
+	Vector3d horizontal;
+	Vector3d vertical;
+};
+
+#endif //PROJECT_CAMERA_H
+
+\end{lstlisting}
+Base class for cameras. A camera is responsible for generating rays from given pixel.
+
+\subsubsection{Simple Camera (src/camera/SimpleCamera.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_SIMPLECAMERA_H
+#define PROJECT_SIMPLECAMERA_H
+
+class SimpleCamera : public Camera {
+	public:
+	SimpleCamera(Point cam_pos, Point cam_target, Vector3d cam_up,
+	double vertical_fov, double aspect_ratio,
+	double aperture, double focus_dist,
+	double _time0 = 0, double _time1 = 0) {
+		// if no blur: aperture = 0.0, focus_dist = 1.0
+		// a nice one: aperture = 0.1, focus_dist = 10
+		// if larger blur: aperture = 2.0, focus_dist = dist to focus plane
+		
+		// set intrinsic
+		auto theta = deg2rad(vertical_fov);
+		auto h = tan(theta / 2);
+		auto viewport_height = 2.0 * h;
+		auto viewport_width = aspect_ratio * viewport_height;
+		
+		// calculate direction for local coordinates
+		w = normalize(cam_pos - cam_target);
+		u = normalize(cross(cam_up, w));
+		v = cross(w, u);
+		
+		// camera extrinsic
+		origin = cam_pos;
+		horizontal = focus_dist * viewport_width * u;
+		vertical = focus_dist * viewport_height * v;
+		lower_left_corner = origin - horizontal / 2 - vertical / 2 - focus_dist * w;
+		lens_radius = aperture / 2;
+		time0 = _time0;
+		time1 = _time1;
+	}
+	
+	Ray get_ray(double s, double t) const override {
+		// calculate _displacement focus _displacement
+		Vector3d rd = lens_radius * random_in_unit_disk();
+		Vector3d offset = u * rd.x() + v * rd.y();
+		
+		return {origin + offset,
+			lower_left_corner + s * horizontal + t * vertical - origin - offset,
+			random_double(time0, time1), true};
+	}
+	
+	double shutter_open() const { return time0; }
+	
+	double shutter_close() const { return time1; }
+	
+	private:
+	// three directions of camera
+	Vector3d u, v, w;
+	// radius = 0: no off-focus blur, 1.0: large blur
+	double lens_radius;
+	// shutter open/close times
+	double time0, time1;
+};
+
+#endif //PROJECT_SIMPLECAMERA_H
+
+\end{lstlisting}
+Simple camera implements three visual effects. The first one is anti-aliasing. It sends our multiple rays with perturbed direction in given pixel, which is basis of Monte Carlo Path Tracing and can be used for anti-aliasing. The second one is off-focus blur. $apture$ and $focus\_dist$ controls this effect. The last one is motion blur. This is realized by adding a uniformly sampled time stamp to each generated ray. When the ray hits a moving object, this time stamp will be used in checking intersection.
+
+\subsection{Volumetric Rendering}
+Volumetric rendering is implemented using participating media, a slow but physically unbiased approach. More specifically, we implement constant medium, which scatters incoming rays uniformly at any depth in any direction.
+\subsubsection*{Participating Medium (src/core/ParticipatingMedium.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-19.
+//
+
+#ifndef PROJECT_PARTICIPATINGMEDIUM_H
+#define PROJECT_PARTICIPATINGMEDIUM_H
+
+class ParticipatingMedium : public Hittable {
+};
+
+#endif //PROJECT_PARTICIPATINGMEDIUM_H
+
+\end{lstlisting}
+\subsubsection*{Constant Medium (src/medium/ConstantMedium.h)}
+\begin{lstlisting} [style=CStyle]
+#include <utility>
+
+//
+// Created by meiyixuan on 2021-12-19.
+//
+
+#ifndef PROJECT_CONSTANTMEDIUM_H
+#define PROJECT_CONSTANTMEDIUM_H
+
+class ConstantMedium : public ParticipatingMedium {
+	public:
+	ConstantMedium(shared_ptr<Hittable> _boundary, double d, const shared_ptr<Texture> &texture)
+	: boundary(std::move(_boundary)), neg_inv_density(-1 / d),
+	phase_function(make_shared<Isotropic>(texture)) {}
+	
+	ConstantMedium(std::shared_ptr<Hittable> _boundary, double d, Color color)
+	: boundary(std::move(_boundary)), neg_inv_density(-1 / d),
+	phase_function(std::make_shared<Isotropic>(color)) {}
+	
+	bool hit(const Ray &ray, double t_min, double t_max, Hit &hit) const override {
+		
+		// check boundary conditions
+		Hit rec1, rec2;
+		if (!boundary->hit(ray, -inf, inf, rec1)) return false;
+		if (!boundary->hit(ray, rec1.t + 0.0001, inf, rec2)) return false;
+		if (rec1.t < t_min) rec1.t = t_min;
+		if (rec2.t > t_max) rec2.t = t_max;
+		if (rec1.t >= rec2.t) return false;
+		if (rec1.t < 0) rec1.t = 0;
+		
+		// check if the ray goes through medium (i.e. no scattering)
+		const auto ray_length = ray.direction().length();
+		const auto distance_inside_boundary = (rec2.t - rec1.t) * ray_length;
+		const auto hit_distance = neg_inv_density * log(random_double());
+		if (hit_distance > distance_inside_boundary) return false;
+		
+		// set hit info
+		hit.t = rec1.t + hit_distance / ray_length;
+		hit.hit_point = ray.at(hit.t);
+		hit.normal = Vector3d(1, 0, 0);  // arbitrary
+		hit.front_face = true;     // also arbitrary
+		hit.mat_ptr = phase_function;
+		
+		return true;
+	}
+	
+	bool bounding_box(double time0, double time1, AABB &output_box) const override {
+		return boundary->bounding_box(time0, time1, output_box);
+	}
+	
+	private:
+	// input d = 0.01 thick smoke, d = 0.0001 thin smoke
+	// thickness increase with d
+	std::shared_ptr<Hittable> boundary;
+	std::shared_ptr<Material> phase_function;
+	double neg_inv_density;
+};
+
+#endif //PROJECT_CONSTANTMEDIUM_H
+
+\end{lstlisting}
+
+\section{Scenes}
+In order to render a scene, we need to specify all the hittables, the camera and the skybox. The following is code for generating results shown in section 2. Some scenes are from Peter Shirley's ray tracing mini-books with modifications.
+\subsection{Book2Final (src/scenes/Book2Final.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-19.
+//
+
+#ifndef PROJECT_BOOK2FINAL_H
+#define PROJECT_BOOK2FINAL_H
+
+HittableList book_2_final_scene() {
+	
+	HittableList objects;
+	
+	// ground
+	HittableList boxes1;
+	auto ground = make_shared<Lambertian>(Color(0.48, 0.83, 0.53));
+	const int boxes_per_side = 20;
+	for (int i = 0; i < boxes_per_side; i++) {
+		for (int j = 0; j < boxes_per_side; j++) {
+			auto w = 100.0;
+			auto x0 = -1000.0 + i * w;
+			auto z0 = -1000.0 + j * w;
+			auto y0 = 0.0;
+			auto x1 = x0 + w;
+			auto y1 = random_double_fixed(1, 101);
+			auto z1 = z0 + w;
+			boxes1.add(make_shared<Box>(Point(x0, y0, z0), Point(x1, y1, z1), ground));
+		}
+	}
+	objects.add(make_shared<BVHNode>(boxes1, 0, 1));
+	
+	// light
+	auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 7);
+	objects.add(make_shared<XZRectangle>(123, 423, 147, 412, 554, light));
+	
+	// moving sphere
+	auto center1 = Point(400, 400, 200);
+	auto center2 = center1 + Vector3d(30, 0, 0);
+	auto moving_sphere_material = make_shared<Lambertian>(Color(0.7, 0.3, 0.1));
+	objects.add(make_shared<MovingSphere>(center1, center2, 0, 1, 50, moving_sphere_material));
+	
+	// dielectric and metal sphere
+	objects.add(make_shared<Sphere>(Point(260, 150, 45), 50,
+	make_shared<Dielectric>(1.5)));
+	objects.add(make_shared<Sphere>(Point(0, 150, 145), 50,
+	make_shared<Metal>(Color(0.8, 0.8, 0.9), 1.0)
+	));
+	
+	// participating media ball
+	auto boundary = make_shared<Sphere>(Point(360, 150, 145), 70,
+	make_shared<Dielectric>(1.5));
+	objects.add(boundary);
+	objects.add(make_shared<ConstantMedium>(boundary, 0.2, Color(0.2, 0.4, 0.9)));
+	
+	// participating media for whole space
+	boundary = make_shared<Sphere>(Point(0, 0, 0), 5000,
+	make_shared<Dielectric>(1.5));
+	objects.add(make_shared<ConstantMedium>(boundary, .0001, Color(1, 1, 1)));
+	
+	// earth ball
+	#if defined(WINDOWS)
+	auto filename = "earthmap.jpg";
+	#else
+	auto filename = "./resources/earthmap.jpg";
+	#endif
+	auto earth_mat = make_shared<Lambertian>(make_shared<ImageTexture>(filename));
+	objects.add(make_shared<Sphere>(Point(400, 200, 400), 100, earth_mat));
+	
+	// marble ball
+	auto marble_texture = make_shared<MarbleTexture>(0.1);
+	objects.add(make_shared<Sphere>(Point(220, 280, 300), 80,
+	make_shared<Lambertian>(marble_texture)));
+	
+	// box with spheres
+	HittableList boxes2;
+	auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+	int ns = 1000;
+	for (int j = 0; j < ns; j++) {
+		boxes2.add(make_shared<Sphere>(Point::random_fixed(0, 165), 10, white));
+	}
+	objects.add(make_shared<Translate>(
+	make_shared<RotateY>(
+	make_shared<BVHNode>(boxes2, 0.0, 1.0), 30),
+	Vector3d(-100, 270, 395)));
+	
+	return objects;
+}
+
+SimpleCamera book_2_final_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(478, 278, -600);
+	Point view_point(278, 278, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 40.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox book_2_final_skybox() { return ConstantSkybox({0, 0, 0}); }
+
+#endif //PROJECT_BOOK2FINAL_H
+
+\end{lstlisting}
+\subsection{CornellBox (src/scenes/CornellBox.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-19.
+//
+
+#ifndef PROJECT_CORNELLBOX_H
+#define PROJECT_CORNELLBOX_H
+
+HittableList cornell_box_scene() {
+	HittableList objects;
+	
+	// materials
+	auto red = make_shared<Lambertian>(Color(.65, .05, .05));
+	auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+	auto green = make_shared<Lambertian>(Color(.12, .45, .15));
+	auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 15);
+	
+	// cornell box
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 0, red));
+	objects.add(make_shared<XZRectangle>(213, 343, 227, 332, 554, light));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 0, white));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 555, white));
+	objects.add(make_shared<XYRectangle>(0, 555, 0, 555, 555, white));
+	
+	// blocks
+	shared_ptr<Hittable> box1 = make_shared<Box>(Point(0, 0, 0),
+	Point(165, 330, 165), white);
+	box1 = make_shared<RotateY>(box1, 15);
+	box1 = make_shared<Translate>(box1, Vector3d(265, 0, 295));
+	objects.add(box1);
+	
+	shared_ptr<Hittable> box2 = make_shared<Box>(Point(0, 0, 0),
+	Point(165, 165, 165), white);
+	box2 = make_shared<RotateY>(box2, -18);
+	box2 = make_shared<Translate>(box2, Vector3d(130, 0, 65));
+	objects.add(box2);
+	
+	return objects;
+}
+
+SimpleCamera cornell_box_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(278, 278, -800);
+	Point view_point(278, 278, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 40.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox cornell_box_skybox() { return ConstantSkybox({0, 0, 0}); }
+
+#endif //PROJECT_CORNELLBOX_H
+
+\end{lstlisting}
+\subsection{CornellBoxEmpty (src/scenes/CornellBoxEmpty.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_CORNELLBOXEMPTY_H
+#define PROJECT_CORNELLBOXEMPTY_H
+
+HittableList cornell_box_empty_scene() {
+	HittableList objects;
+	
+	auto red = make_shared<Lambertian>(Color(.65, .05, .05));
+	auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+	auto green = make_shared<Lambertian>(Color(.12, .45, .15));
+	auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 15);
+	
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 0, red));
+	objects.add(make_shared<XZRectangle>(213, 343, 227, 332, 554, light));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 0, white));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 555, white));
+	objects.add(make_shared<XYRectangle>(0, 555, 0, 555, 555, white));
+	
+	return objects;
+}
+
+SimpleCamera cornell_box_empty_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(278, 278, -800);
+	Point view_point(278, 278, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 40.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox cornell_box_empty_skybox() { return ConstantSkybox({0, 0, 0}); }
+
+#endif //PROJECT_CORNELLBOXEMPTY_H
+
+\end{lstlisting}
+\subsection{CornellBoxParticipatingMedia (src/scenes/CornellBoxParticipatingMedia.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-19.
+//
+
+#ifndef PROJECT_CORNELLBOXPARTICIPATINGMEDIA_H
+#define PROJECT_CORNELLBOXPARTICIPATINGMEDIA_H
+
+HittableList cornell_box_participating_media_scene() {
+	HittableList objects;
+	
+	// materials
+	auto red = make_shared<Lambertian>(Color(.65, .05, .05));
+	auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+	auto green = make_shared<Lambertian>(Color(.12, .45, .15));
+	auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 15);
+	
+	// cornell box
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 0, red));
+	objects.add(make_shared<XZRectangle>(213, 343, 227, 332, 554, light));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 0, white));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 555, white));
+	objects.add(make_shared<XYRectangle>(0, 555, 0, 555, 555, white));
+	
+	// blocks
+	shared_ptr<Hittable> box1 = make_shared<Box>(Point(0, 0, 0),
+	Point(165, 330, 165), white);
+	box1 = make_shared<RotateY>(box1, 15);
+	box1 = make_shared<Translate>(box1, Vector3d(265, 0, 295));
+	objects.add(make_shared<ConstantMedium>(box1, 0.01, Color(0, 0, 0)));
+	
+	shared_ptr<Hittable> box2 = make_shared<Box>(Point(0, 0, 0),
+	Point(165, 165, 165), white);
+	box2 = make_shared<RotateY>(box2, -18);
+	box2 = make_shared<Translate>(box2, Vector3d(130, 0, 65));
+	objects.add(make_shared<ConstantMedium>(box2, 0.01, Color(1, 1, 1)));
+	
+	return objects;
+}
+
+SimpleCamera cornell_box_participating_media_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(278, 278, -800);
+	Point view_point(278, 278, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 40.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox cornell_box_participating_media_skybox() { return ConstantSkybox({0, 0, 0}); }
+
+#endif //PROJECT_CORNELLBOXPARTICIPATINGMEDIA_H
+
+\end{lstlisting}
+\subsection{CornellBoxTwoBlocks (src/scenes/CornellBoxTwoBlocks.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-19.
+//
+
+#ifndef PROJECT_CORNELLBOXTWOBLOCKS_H
+#define PROJECT_CORNELLBOXTWOBLOCKS_H
+
+HittableList cornell_box_two_blocks_scene() {
+	HittableList objects;
+	
+	// materials
+	auto red = make_shared<Lambertian>(Color(.65, .05, .05));
+	auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+	auto green = make_shared<Lambertian>(Color(.12, .45, .15));
+	auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 15);
+	
+	// cornell box
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 0, red));
+	objects.add(make_shared<XZRectangle>(213, 343, 227, 332, 554, light));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 0, white));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 555, white));
+	objects.add(make_shared<XYRectangle>(0, 555, 0, 555, 555, white));
+	
+	// blocks
+	objects.add(make_shared<Box>(Point(130, 0, 65), Point(295, 165, 230), white));
+	objects.add(make_shared<Box>(Point(265, 0, 295), Point(430, 330, 460), white));
+	
+	return objects;
+}
+
+SimpleCamera cornell_box_two_blocks_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(278, 278, -800);
+	Point view_point(278, 278, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 40.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox cornell_box_two_blocks_skybox() { return ConstantSkybox({0, 0, 0}); }
+
+#endif //PROJECT_CORNELLBOXTWOBLOCKS_H
+
+\end{lstlisting}
+\subsection{Earth (src/scenes/Earth.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_EARTH_H
+#define PROJECT_EARTH_H
+
+HittableList earth_scene() {
+	HittableList world;
+	#if defined(WINDOWS)
+	auto filename = "earthmap.jpg";
+	#else
+	auto filename = "./resources/earthmap.jpg";
+	#endif
+	auto earth_texture = make_shared<ImageTexture>(filename);
+	auto earth_surface = make_shared<Lambertian>(earth_texture);
+	auto globe1 = make_shared<Sphere>(Point(0, 0, 0), 2, earth_surface);
+	auto globe2 = make_shared<Sphere>(Point(-100, -100, -100), 2, earth_surface);
+	world.add(globe1);
+	world.add(globe2); // bvh will crash if only one object
+	return world;
+}
+
+SimpleCamera earth_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(13, 2, 3);
+	Point view_point(0, 0, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 20.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+SimpleSkybox earth_skybox() { return {}; }
+
+#endif //PROJECT_EARTH_H
+
+\end{lstlisting}
+\subsection{MotionBlur (src/scenes/MotionBlur.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_MOTIONBLUR_H
+#define PROJECT_MOTIONBLUR_H
+
+HittableList motion_blur_scene() {
+	HittableList world;
+	
+	auto ground_material = make_shared<Lambertian>(Color(0.5, 0.5, 0.5));
+	world.add(make_shared<Sphere>(Point(0, -1000, 0), 1000, ground_material));
+	
+	for (int a = -11; a < 11; a++) {
+		for (int b = -11; b < 11; b++) {
+			auto choose_mat = random_double_fixed();
+			Point center(a + 0.9 * random_double_fixed(), 0.15 + 0.1 * random_double_fixed(),
+			b + 0.9 * random_double_fixed());
+			
+			if ((center - Point(4, 0.2, 0)).length() > 0.9) {
+				shared_ptr <Material> sphere_material;
+				
+				if (choose_mat < 0.6) {
+					// diffuse
+					auto albedo = Color::random_fixed() * Color::random_fixed();
+					sphere_material = make_shared<Lambertian>(albedo);
+					auto center2 = center + Vector3d(0, random_double_fixed(0, .5), 0);
+					world.add(make_shared<MovingSphere>(center, center2, 0.0, 1.0,
+					center.y(), sphere_material));
+				} else if (choose_mat < 0.9) {
+					// metal
+					auto albedo = Color::random_fixed(0.5, 1);
+					auto fuzz = random_double_fixed(0, 0.5);
+					sphere_material = make_shared<Metal>(albedo, fuzz);
+					world.add(make_shared<Sphere>(center, center.y(), sphere_material));
+				} else {
+					// glass
+					sphere_material = make_shared<Dielectric>(1.5);
+					world.add(make_shared<Sphere>(center, center.y(), sphere_material));
+				}
+			}
+		}
+	}
+	
+	auto material1 = make_shared<Dielectric>(1.5);
+	world.add(make_shared<Sphere>(Point(0, 1, 0), 1.0, material1));
+	
+	auto material2 = make_shared<Lambertian>(Color(0.4, 0.2, 0.1));
+	world.add(make_shared<Sphere>(Point(-4, 1, 0), 1.0, material2));
+	
+	auto material3 = make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
+	world.add(make_shared<Sphere>(Point(4, 1, 0), 1.0, material3));
+	
+	return world;
+}
+
+SimpleCamera motion_blur_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(13, 2, 3);
+	Point view_point(0, 0, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 20.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.1;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 0.5;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+SimpleSkybox motion_blur_skybox() { return {}; }
+
+#endif //PROJECT_MOTIONBLUR_H
+
+\end{lstlisting}
+\subsection{MotionBlurChecker (src/scenes/MotionBlurChecker.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_MOTIONBLURCHECKER_H
+#define PROJECT_MOTIONBLURCHECKER_H
+
+HittableList motion_blur_checker_scene() {
+	HittableList world;
+	
+	auto checker = make_shared<CheckerTexture>(Color(0.2, 0.3, 0.1),
+	Color(0.9, 0.9, 0.9));
+	world.add(make_shared<Sphere>(Point(0, -1000, 0), 1000,
+	make_shared<Lambertian>(checker)));
+	
+	for (int a = -11; a < 11; a++) {
+		for (int b = -11; b < 11; b++) {
+			auto choose_mat = random_double_fixed();
+			Point center(a + 0.9 * random_double_fixed(), 0.15 + 0.1 * random_double_fixed(),
+			b + 0.9 * random_double_fixed());
+			
+			if ((center - Point(4, 0.2, 0)).length() > 0.9) {
+				shared_ptr <Material> sphere_material;
+				
+				if (choose_mat < 0.6) {
+					// diffuse
+					auto albedo = Color::random_fixed() * Color::random_fixed();
+					sphere_material = make_shared<Lambertian>(albedo);
+					auto center2 = center + Vector3d(0, random_double_fixed(0, .5), 0);
+					world.add(make_shared<MovingSphere>(center, center2, 0.0, 1.0,
+					center.y(), sphere_material));
+				} else if (choose_mat < 0.9) {
+					// metal
+					auto albedo = Color::random_fixed(0.5, 1);
+					auto fuzz = random_double_fixed(0, 0.5);
+					sphere_material = make_shared<Metal>(albedo, fuzz);
+					world.add(make_shared<Sphere>(center, center.y(), sphere_material));
+				} else {
+					// glass
+					sphere_material = make_shared<Dielectric>(1.5);
+					world.add(make_shared<Sphere>(center, center.y(), sphere_material));
+				}
+			}
+		}
+	}
+	
+	auto material1 = make_shared<Dielectric>(1.5);
+	world.add(make_shared<Sphere>(Point(0, 1, 0), 1.0, material1));
+	
+	auto material2 = make_shared<Lambertian>(Color(0.4, 0.2, 0.1));
+	world.add(make_shared<Sphere>(Point(-4, 1, 0), 1.0, material2));
+	
+	auto material3 = make_shared<Metal>(Color(0.7, 0.6, 0.5), 0.0);
+	world.add(make_shared<Sphere>(Point(4, 1, 0), 1.0, material3));
+	
+	return world;
+}
+
+SimpleCamera motion_blur_checker_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(13, 2, 3);
+	Point view_point(0, 0, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 20.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.1;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 0.5;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+SimpleSkybox motion_blur_checker_skybox() { return {}; }
+
+#endif //PROJECT_MOTIONBLURCHECKER_H
+
+\end{lstlisting}
+\subsection{PMTest (src/scenes/PMTest.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-29.
+//
+
+#ifndef PROJECT_PMTEST_H
+#define PROJECT_PMTEST_H
+
+HittableList PM_test_scene() {
+	HittableList objects;
+	
+	// wall materials
+	auto red = std::make_shared<Lambertian>(std::make_shared<ColorTexture>(0.45, 0.05, 0.05));
+	auto white = std::make_shared<Lambertian>(std::make_shared<ColorTexture>(0.53, 0.53, 0.53));
+	auto green = std::make_shared<Lambertian>(std::make_shared<ColorTexture>(0.12, 0.45, 0.15));
+	auto bunny_mat = std::make_shared<Dielectric>(1.5, Vector3d(0.87, 0.49, 0.173));
+	
+	// wall objects
+	auto l_wall = std::make_shared<YZRectangle>(0, 5.55, 0, 5.55, 5.55, red);
+	auto r_wall = std::make_shared<YZRectangle>(0, 5.55, 0, 5.55, 0, green);
+	auto ceiling = std::make_shared<XZRectangle>(0, 5.55, 0, 5.55, 5.55, white);
+	auto floor = std::make_shared<XZRectangle>(0, 5.55, 0, 5.55, 0, white);
+	auto front = std::make_shared<XYRectangle>(0, 5.55, 0, 5.55, 5.55, white);
+	auto box = std::make_shared<Box>(Vector3d(0, 0, 0), Vector3d(0.6, 0.6, 0.6), green);
+	objects.add(l_wall);
+	objects.add(r_wall);
+	objects.add(ceiling);
+	objects.add(floor);
+	objects.add(front);
+	objects.add(std::make_shared<Translate>(std::make_shared<RotateY>(box, -18),
+	Vector3d(3.90, 0, 1.85)));
+	
+	// bunny
+	auto obj_name = model_pth() + "bunny/bunny.obj";
+	auto parser = ObjectParser(obj_name, "");
+	objects.add(std::make_shared<Translate>(parser.parse(0, 0,
+	Vector3d(), bunny_mat),
+	Vector3d(1.8, 0.2, 2)));
+	
+	return objects;
+}
+
+std::shared_ptr<YZRectangleLight> PM_test_light() {
+	// light
+	auto light_mat = std::make_shared<DiffuseLight>(std::make_shared<ColorTexture>(1, 1, 1),
+	12);
+	auto light = std::make_shared<YZRectangleLight>(1.13, 2.43, 2.27, 3.32, 0, light_mat);
+	return light;
+}
+
+SimpleCamera PM_test_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(2.775, 2.775, -3);
+	Point view_point(2.775, 2.775, 1);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 75.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox PM_test_skybox() { return {}; }
+
+#endif //PROJECT_PMTEST_H
+
+\end{lstlisting}
+\subsection{SimpleLight (src/scenes/SimpleLight.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_SIMPLELIGHT_H
+#define PROJECT_SIMPLELIGHT_H
+
+HittableList simple_light_scene() {
+	HittableList objects;
+	
+	// objects
+	auto marble_texture = make_shared<MarbleTexture>(4);
+	objects.add(make_shared<Sphere>(Point(0, -1000, 0), 1000,
+	make_shared<Lambertian>(marble_texture)));
+	objects.add(make_shared<Sphere>(Point(0, 2, 0), 2,
+	make_shared<Lambertian>(marble_texture)));
+	
+	// light
+	auto light_mat = make_shared<DiffuseLight>(Color(1, 1, 1), 4);
+	objects.add(make_shared<XYRectangle>(3, 5, 1, 3, -2, light_mat));
+	
+	return objects;
+}
+
+SimpleCamera simple_light_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(26, 3, 6);
+	Point view_point(0, 2, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 20.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox simple_light_skybox() { return ConstantSkybox({0, 0, 0}); }
+
+#endif //PROJECT_SIMPLELIGHT_H
+
+\end{lstlisting}
+\subsection{Sponza (src/scenes/Sponza.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-23.
+//
+
+#ifndef PROJECT_SPONZA_H
+#define PROJECT_SPONZA_H
+
+HittableList sponza_scene() {
+	HittableList objects;
+	
+	// mesh
+	auto obj_name = model_pth() + "sponza/sponza.obj";
+	auto mtl_path = model_pth() + "sponza/";
+	auto parser = ObjectParser(obj_name, mtl_path);
+	objects.add(parser.parse(0, 0.1,
+	normalize(Vector3d(1, 20, 2))));
+	
+	return objects;
+}
+
+SimpleCamera sponza_camera(double aspect_ratio) {
+	// basic settings
+	// 5 10 5 -> 0 0 0
+	// 2 1 -2 -> -5 2 1
+	Point camera_position(-5, 1, 2);
+	Point view_point(5, 3, -1);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 70.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+DirectionalSkybox sponza_skybox() {
+	// 1, 5 for sponza
+	return {1, 5, normalize(Vector3d(1, 20, 2)), 0.8};
+}
+
+#endif //PROJECT_SPONZA_H
+
+\end{lstlisting}
+\subsection{SponzaCrytek (src/scenes/SponzaCrytek.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-26.
+//
+
+#ifndef PROJECT_SPONZACRYTEK_H
+#define PROJECT_SPONZACRYTEK_H
+
+HittableList sponza_crytek_scene() {
+	HittableList objects;
+	
+	// mesh
+	auto obj_name = model_pth() + "sponza_crytek/sponza.obj";
+	auto mtl_path = model_pth() + "sponza_crytek/";
+	auto parser = ObjectParser(obj_name, mtl_path);
+	objects.add(parser.parse(2));
+	
+	return objects;
+}
+
+SimpleCamera sponza_crytek_camera(double aspect_ratio) {
+	// basic settings
+	//    Point camera_position(-5, 1, 2);
+	//    Point view_point(5, 3, -1);
+	Point camera_position(-350, 80, 150);
+	Point view_point(0, 170, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 75.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+TwoLayerSkybox sponza_crytek_skybox_cloudy() {
+	return {std::make_shared<SimpleSkybox>(),
+		std::make_shared<DirectionalSkybox>(1, 12,
+		normalize(Vector3d(1, 20, 2)),
+		0.8)};
+}
+
+TwoLayerSkybox sponza_crytek_skybox_sunny() {
+	return {std::make_shared<SimpleSkybox>(1),
+		std::make_shared<DirectionalSkybox>(0, 100,
+		normalize(Vector3d(0, 5, 1)),
+		0.95)};
+}
+
+#endif //PROJECT_SPONZACRYTEK_H
+
+\end{lstlisting}
+\subsection{TestObj (src/scenes/TestObj.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-20.
+//
+
+#ifndef PROJECT_TESTOBJ_H
+#define PROJECT_TESTOBJ_H
+
+HittableList test_obj_scene() {
+	HittableList objects;
+	
+	// mesh
+	auto obj_name = model_pth() + "CornellBox-Original.obj";
+	auto mtl_path = model_pth();
+	objects.add(ObjectParser(obj_name, mtl_path).parse());
+	
+	return objects;
+}
+
+SimpleCamera test_obj_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(0, 1, 5);
+	Point view_point(0, 1, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 40.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox test_obj_skybox() { return ConstantSkybox({0, 0, 0}); }
+
+#endif //PROJECT_TESTOBJ_H
+
+\end{lstlisting}
+\subsection{TestTriangle (src/scenes/TestTriangle.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-23.
+//
+
+#ifndef PROJECT_TESTTRIANGLE_H
+#define PROJECT_TESTTRIANGLE_H
+
+HittableList test_triangle_scene() {
+	HittableList objects;
+	
+	auto red = make_shared<Lambertian>(Color(.65, .05, .05));
+	auto white = make_shared<Lambertian>(Color(.73, .73, .73));
+	auto green = make_shared<Lambertian>(Color(.12, .45, .15));
+	auto light = make_shared<DiffuseLight>(Color(1, 1, 1), 15);
+	#if defined(WINDOWS)
+	auto filename = "earthmap.jpg";
+	#else
+	auto filename = "./resources/earthmap.jpg";
+	#endif
+	auto earth_texture = make_shared<ImageTexture>(filename);
+	auto earth_surface = make_shared<Lambertian>(earth_texture);
+	
+	// wall
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 555, green));
+	objects.add(make_shared<YZRectangle>(0, 555, 0, 555, 0, red));
+	objects.add(make_shared<XZRectangle>(213, 343, 227, 332, 554, light));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 0, white));
+	objects.add(make_shared<XZRectangle>(0, 555, 0, 555, 555, white));
+	objects.add(make_shared<XYRectangle>(0, 555, 0, 555, 555, white));
+	
+	// triangle
+	auto v0 = make_shared<Vertex>(0.0, 0.0, Point(200, 200, 200));
+	auto v1 = make_shared<Vertex>(0.0, 1.0, Point(200, 300, 300));
+	auto v2 = make_shared<Vertex>(1.0, 0.0, Point(400, 200, 200));
+	objects.add(std::make_shared<Triangle>(v0, v1, v2, earth_surface));
+	
+	return objects;
+}
+
+SimpleCamera test_triangle_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(278, 278, -800);
+	Point view_point(278, 278, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 40.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+ConstantSkybox test_triangle_skybox() { return ConstantSkybox({0, 0, 0}); }
+
+#endif //PROJECT_TESTTRIANGLE_H
+
+\end{lstlisting}
+\subsection{TwoCheckerSpheres (src/scenes/TwoCheckerSpheres.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_TWOCHECKERSPHERES_H
+#define PROJECT_TWOCHECKERSPHERES_H
+
+HittableList two_checker_spheres_scene() {
+	HittableList objects;
+	
+	auto checker = make_shared<CheckerTexture>(Color(0.2, 0.3, 0.1),
+	Color(0.9, 0.9, 0.9));
+	
+	objects.add(make_shared<Sphere>(Point(0, -10, 0), 10,
+	make_shared<Lambertian>(checker)));
+	objects.add(make_shared<Sphere>(Point(0, 10, 0), 10,
+	make_shared<Lambertian>(checker)));
+	
+	return objects;
+}
+
+SimpleCamera two_checker_spheres_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(13, 2, 3);
+	Point view_point(0, 0, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 20.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+SimpleSkybox two_checker_spheres_skybox() { return {}; }
+
+#endif //PROJECT_TWOCHECKERSPHERES_H
+
+\end{lstlisting}
+\subsection{TwoMarbleSpheres (src/scenes/TwoMarbleSpheres.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_TWOMARBLESPHERES_H
+#define PROJECT_TWOMARBLESPHERES_H
+
+HittableList two_marble_spheres_scene() {
+	HittableList objects;
+	
+	auto perlin_texture = make_shared<MarbleTexture>(4);
+	objects.add(make_shared<Sphere>(Point(0, -1000, 0), 1000,
+	make_shared<Lambertian>(perlin_texture)));
+	objects.add(make_shared<Sphere>(Point(0, 2, 0), 2,
+	make_shared<Lambertian>(perlin_texture)));
+	
+	return objects;
+}
+
+SimpleCamera two_marble_spheres_camera(double aspect_ratio) {
+	// basic settings
+	Point camera_position(13, 2, 3);
+	Point view_point(0, 0, 0);
+	Vector3d camera_up(0, 1, 0);
+	// fov
+	auto vertical_fov = 20.0;
+	// off focus blur
+	auto dist_to_focus = 10.0;
+	auto aperture = 0.0;
+	// motion blur (0.0 - 1.0)
+	auto shutter_open = 0.0;
+	auto shutter_close = 1.0;
+	
+	return {camera_position, view_point, camera_up, vertical_fov, aspect_ratio,
+		aperture, dist_to_focus, shutter_open, shutter_close};
+}
+
+SimpleSkybox two_marble_spheres_skybox() { return {}; }
+
+#endif //PROJECT_TWOMARBLESPHERES_H
+
+\end{lstlisting}
 
 \section{References}
 \noindent
