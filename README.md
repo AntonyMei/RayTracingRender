@@ -69,31 +69,29 @@
 
 <font size="4"> Add rotation to the two boxes. Color bleeding is obvious on two surfaces facing walls. </font>
 
-##<font size="5"> 9. Cornell Box Participating Media </font>
-
 ![Cornell Box Participating Media](results/cornell_box_participating_media.jpg)
 
 <font size="4"> This scene replace the two original boxes with participating media boxes. These boxes are assigned with isotropic material to simulate the effect of smoke. This is a technique often used in volumetric rendering. </font>
 
-## <font size="5"> 10. Book2 Final </font>
+## <font size="5"> 9. Book2 Final </font>
 
 ![Book 2 Final](results/book_2_final.jpg)
 
 <font size="4"> This scene is a modified version of the one used by Peter Shirley in Ray Tracing Mini-Books 2. It combines may techniques. The whole scene is filled with thin smoke, rendered using participating media. The orange ball on the top left shows motion blur. The earth ball shows image textures. The marble ball in the middle is a complex example of procedural texture computed using Perlin noise. The box on the top right contains 10000 balls as components and use BVH to accelerate. </font>
 
-## <font size="5"> 11. Test Obj </font>
+## <font size="5"> 10. Test Obj </font>
 
 ![Test Obj](results/test_obj.jpg)
 
 <font size="4"> A simple scene used in obj test. This Cornell Box is made of triangles. It is stored in a .obj file (with material description in .mtl file) and imported using Tinyobjloader. </font>
 
-## <font size="5"> 12. Sponza Sun </font>
+## <font size="5"> 11. Sponza Sun </font>
 
 ![Sponza Sun](results/sponza_sun.jpg)
 
 <font size="4"> This scene is a more complicated one with image textures. Note that in this scene, a biased sampling technique is used such that the sun gets more samples. </font>
 
-## <font size="5"> 13. Sponza Crytek Series </font>
+## <font size="5"> 12. Sponza Crytek Series </font>
 
 ![Sponza Crytek Cloudy](results/sponza_crytek_cloudy.jpg)
 
@@ -101,7 +99,7 @@
 
 ![Sponza Crytek Sunny](results/sponza_crytek_sunny.jpg)
 
-## <font size="5"> 14. Photon Mapping Series </font>
+## <font size="5"> 13. Photon Mapping Series </font>
 <font size="4"> A bunny rendered using Photon Mapping. When rendering the first image, photon tracing depth is set to one so that the caustic effect can be seen clearly. The correct effect is shown in the second image. </font>
 
 ![Photon Mapping Bunny Caustic](results/photon_mapping_bunny_caustic.jpg)
