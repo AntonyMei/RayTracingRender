@@ -3699,6 +3699,352 @@ class BumpMaterial : public Material {
 \end{lstlisting}
 Rigorously speaking, bump material is not a material, since it is not used for rendering. This material contains a $bump\_map$ texture that is applied to the surface normal of models. It changes surface normals and adds detail without modifying model geometry. For detailed implementation of bump map, see section 8.2.
 
+\subsection{Textures}
+\subsubsection{Base Texture (src/core/Texture.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_TEXTURE_H
+#define PROJECT_TEXTURE_H
+
+class Texture {
+	public:
+	virtual Color uv_color(double u, double v, const Point &p) const = 0;
+};
+
+#endif //PROJECT_TEXTURE_H
+
+\end{lstlisting}
+Base class for textures. A texture takes in uv-coordinates and hit point and returns color at that point.
+
+\subsubsection{Color Texture (src/texture/ColorTexture.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_COLORTEXTURE_H
+#define PROJECT_COLORTEXTURE_H
+
+class ColorTexture : public Texture {
+	public:
+	ColorTexture() = default;
+	
+	explicit ColorTexture(Color c) : texture_color(c) {}
+	
+	ColorTexture(double r, double g, double b) : texture_color{r, g, b} {}
+	
+	Color uv_color(double u, double v, const Point &p) const override {
+		return texture_color;
+	}
+	
+	private:
+	Color texture_color;
+};
+
+#endif //PROJECT_COLORTEXTURE_H
+
+\end{lstlisting}
+A texture of pure color.
+
+\subsubsection{Checker Texture (src/texture/CheckerTexture.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_CHECKERTEXTURE_H
+#define PROJECT_CHECKERTEXTURE_H
+
+class CheckerTexture : public Texture {
+	public:
+	CheckerTexture() = default;
+	
+	CheckerTexture(std::shared_ptr<Texture> _odd, std::shared_ptr<Texture> _even, double _step_size = 10)
+	: odd(std::move(_odd)), even(std::move(_even)), step_size(_step_size) {}
+	
+	CheckerTexture(const Color &_odd, const Color &_even, double _step_size = 10)
+	: odd(std::make_shared<ColorTexture>(_odd)),
+	even(std::make_shared<ColorTexture>(_even)),
+	step_size(_step_size) {}
+	
+	Color uv_color(double u, double v, const Point &p) const override {
+		auto sines = sin(step_size * p.x()) * sin(step_size * p.y()) * sin(step_size * p.z());
+		if (sines < 0)
+		return odd->uv_color(u, v, p);
+		else
+		return even->uv_color(u, v, p);
+	}
+	
+	private:
+	double step_size{10};
+	std::shared_ptr<Texture> odd;
+	std::shared_ptr<Texture> even;
+};
+
+#endif //PROJECT_CHECKERTEXTURE_H
+
+\end{lstlisting}
+A simple procedural texture that simulates checker board.
+
+\subsubsection{Perlin Texture (src/texture/PerlinTexture.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_PERLINTEXTURE_H
+#define PROJECT_PERLINTEXTURE_H
+
+class PerlinTexture : public Texture {
+	public:
+	PerlinTexture() = default;
+	
+	explicit PerlinTexture(double _scale) : scale(_scale) {}
+	
+	Color uv_color(double u, double v, const Point &p) const override {
+		// if we use "Color(1,1,1) * 0.5 * (1.0 + noise.noise(scale * p))",
+		// we will get a lighter looking Perlin texture.
+		return Color(1, 1, 1) * noise.turbulence(scale * p);
+	}
+	
+	private:
+	// scale = 1: very low freq
+	// scale = 4: moderate frequency
+	PerlinNoise noise;
+	double scale{1};
+};
+
+#endif //PROJECT_PERLINTEXTURE_H
+
+\end{lstlisting}
+Perlin Texture is generated directly from Perlin noise.
+
+\subsubsection{Marble Texture (src/texture/MarbleTexture.h)}
+\begin{lstlisting}[style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_MARBLETEXTURE_H
+#define PROJECT_MARBLETEXTURE_H
+
+class MarbleTexture : public Texture {
+	public:
+	MarbleTexture() = default;
+	
+	explicit MarbleTexture(double _scale) : scale(_scale) {}
+	
+	Color uv_color(double u, double v, const Point &p) const override {
+		// This will render a marble texture.
+		return Color(1, 1, 1) * 0.5 * (1 + sin(scale * p.z() + 10 * noise.turbulence(scale * p / 4)));
+	}
+	
+	private:
+	PerlinNoise noise;
+	double scale{4};
+};
+
+#endif //PROJECT_MARBLETEXTURE_H
+
+\end{lstlisting}
+A very nice example of procedural texture. It is similar to Perlin Texture in that they both use Perlin noise. However, this texture is insensitive to scaling and can simulate marble on any surface.
+
+\subsubsection{Image Texture (src/texture/ImageTexture.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-18.
+//
+
+#ifndef PROJECT_IMAGETEXTURE_H
+#define PROJECT_IMAGETEXTURE_H
+
+class ImageTexture : public Texture {
+	public:
+	const static int bytes_per_pixel = 3;
+	constexpr static double color_scale = 1.0 / 255.0;
+	
+	ImageTexture() = default;
+	
+	explicit ImageTexture(const char *filename, int clamp_type = 1) {
+		// load image using stb image
+		auto components_per_pixel = bytes_per_pixel;
+		data = stbi_load(filename, &width, &height, &components_per_pixel, components_per_pixel);
+		
+		// check integrity
+		if (!data) {
+			std::cerr << "ERROR: Could not load texture image file '" << filename << "'.\n";
+			width = height = 0;
+		}
+		
+		// set parameter
+		bytes_per_scanline = bytes_per_pixel * width;
+		uv_clamp_type = clamp_type;
+	}
+	
+	~ImageTexture() { delete[] data; }
+	
+	Color uv_color(double u, double v, const Vector3d &p) const override {
+		// return cyan if no texture image found
+		if (data == nullptr) return {0, 1, 1};
+		
+		// parse input
+		if (uv_clamp_type == 0) {
+			u = clamp(u, 0.0, 1.0);
+			v = 1.0 - clamp(v, 0.0, 1.0);
+		} else if (uv_clamp_type == 1) {
+			u = u - floor(u);
+			v = v - floor(v);
+		}
+		if (u < 0 || u > 1.0) std::cerr << "error u " << u << std::endl;
+		if (v < 0 || v > 1.0) std::cerr << "error v " << v << std::endl;
+		auto i = static_cast<int>(u * width);
+		auto j = static_cast<int>(v * height);
+		i = i >= width ? width - 1 : i;
+		j = j >= height ? height - 1 : j;
+		
+		// locate pixel and return
+		
+		auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
+		return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
+	}
+	
+	private:
+	unsigned char *data{nullptr};
+	int width{0}, height{0};
+	int bytes_per_scanline{0};
+	int uv_clamp_type{-1};  // 0: clamp 1: mod
+};
+
+#endif //PROJECT_IMAGETEXTURE_H
+
+\end{lstlisting}
+Image texture is implemented using stb$\_$image. Its return value depends on the attached image. It is used in PBRMaterial as default textures.
+
+\subsubsection{Bump Texture (src/texture/BumpTexture.h)}
+\begin{lstlisting} [style=CStyle]
+//
+// Created by meiyixuan on 2021-12-25.
+//
+
+#ifndef PROJECT_BUMPTEXTURE_H
+#define PROJECT_BUMPTEXTURE_H
+
+class BumpTexture : public Texture {
+	public:
+	const static int bytes_per_pixel = 3;
+	constexpr static double color_scale = 1.0 / 255.0;
+	
+	BumpTexture() = default;
+	
+	explicit BumpTexture(const char *filename, int _bump_map_type, double _bump_scale = 0.01,
+	int clamp_type = 1) {
+		// load image using stb image
+		auto components_per_pixel = bytes_per_pixel;
+		data = stbi_load(filename, &width, &height, &components_per_pixel, components_per_pixel);
+		
+		// check integrity
+		if (!data) {
+			std::cerr << "ERROR: Could not load texture image file '" << filename << "'.\n";
+			width = height = 0;
+		}
+		
+		// set parameter
+		bytes_per_scanline = bytes_per_pixel * width;
+		uv_clamp_type = clamp_type;
+		bump_scale = _bump_scale;
+		bump_map_type = _bump_map_type;
+	}
+	
+	~BumpTexture() { delete[] data; }
+	
+	Color uv_color(double u, double v, const Vector3d &p) const override { return {}; }
+	
+	Vector3d get_normal(double u, double v) {
+		// return 0 if bump texture not found
+		if (data == nullptr) return {0, 0, 1};
+		
+		// parse input
+		if (uv_clamp_type == 0) {
+			u = clamp(u, 0.0, 1.0);
+			v = 1.0 - clamp(v, 0.0, 1.0);
+		} else if (uv_clamp_type == 1) {
+			u = u - floor(u);
+			v = v - floor(v);
+		}
+		if (u < 0 || u > 1.0) std::cerr << "error u " << u << std::endl;
+		if (v < 0 || v > 1.0) std::cerr << "error v " << v << std::endl;
+		auto i = static_cast<int>(u * width);
+		auto j = static_cast<int>(v * height);
+		i = i >= width ? width - 1 : i;
+		j = j >= height ? height - 1 : j;
+		
+		// return based on type
+		if (bump_map_type == 0) {
+			// height map
+			// calculate adjacent coordinates
+			int ip1 = i + 1 == width ? 0 : i + 1;
+			int im1 = i - 1 == -1 ? width - 1 : i - 1;
+			int jp1 = j + 1 == height ? 0 : j + 1;
+			int jm1 = j - 1 == -1 ? height - 1 : j - 1;
+			
+			// calculate normal
+			Vector3d normal = Vector3d(-bump_scale * (h(ip1, j) - h(im1, j)),
+			-bump_scale * (h(i, jp1) - h(i, jm1)),
+			1);
+			return normal;
+		} else if (bump_map_type == 1) {
+			// normal map
+			auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
+			return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
+		} else if (bump_map_type == 2) {
+			// auto type detection
+			auto pixel = data + j * bytes_per_scanline + i * bytes_per_pixel;
+			if (pixel[0] == pixel[1] && pixel[0] == pixel[2]) {
+				// height map
+				// calculate adjacent coordinates
+				int ip1 = i + 1 == width ? 0 : i + 1;
+				int im1 = i - 1 == -1 ? width - 1 : i - 1;
+				int jp1 = j + 1 == height ? 0 : j + 1;
+				int jm1 = j - 1 == -1 ? height - 1 : j - 1;
+				
+				// calculate normal
+				Vector3d normal = Vector3d(-bump_scale * (h(ip1, j) - h(im1, j)),
+				-bump_scale * (h(i, jp1) - h(i, jm1)),
+				1);
+				return normal;
+			} else {
+				// normal map
+				return {color_scale * pixel[0], color_scale * pixel[1], color_scale * pixel[2]};
+			}
+		} else {
+			std::cerr << "Unknown bump map type" << std::endl;
+			return {0, 0, 1};
+		}
+	}
+	
+	private:
+	unsigned char *data{nullptr};
+	int width{0}, height{0};
+	int bytes_per_scanline{0};
+	int uv_clamp_type{-1};  // 0: clamp 1: mod
+	double bump_scale{0.01};
+	int bump_map_type{-1};  // 0: height, 1: normal, 2: auto
+	
+	inline int h(int i, int j) {
+		return (data + j * bytes_per_scanline + i * bytes_per_pixel)[0];
+	}
+};
+
+#endif //PROJECT_BUMPTEXTURE_H
+
+\end{lstlisting}
+Bump texture stores perturbation to surface normal. When we talk about bump map, we may either refer to normal map (i.e. the texture stores perturbation along three axes in its three channels) or height map (i.e. the texture only uses one channel to store height information, normal perturbation needs to be calculated by differentiation). Also, for $uv$ coordinate larger than one, there are two different interpretations: clamp (i.e. 0-1 clamp) or mod (take $u-floor(u)$ as real $u$). In bump map we deal with these cases separately for compatibility with all kinds of models.
+
+\section{Visual Effects}
+\subsection{Camera Effects}
 
 \section{References}
 \noindent
