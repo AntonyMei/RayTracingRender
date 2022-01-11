@@ -1,5 +1,4 @@
 # Renderer Usage
-___
 ## Usage on Windows
 + <font size="4"> step 1: compile this project using cmake </font>
 + <font size="4"> step 2: run "Project.exe 8", here 8 means using 8 threads (after running we will get 8 .partial files) </font>
@@ -14,7 +13,6 @@ ___
 
 
 # Results
-___
 ## <font size="5"> 1. Hollow Glass Ball </font>
 
 ![Hollow Glass Ball](results/hollow_glass_ball.jpg)
