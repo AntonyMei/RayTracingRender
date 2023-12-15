@@ -18,6 +18,9 @@
 #include <cmath>
 #include <limits>
 #include <random>
+#include <unordered_map>
+#include <iomanip>
+#include <sstream>
 
 // multiprocessing / multithreading
 #ifdef WINDOWS
@@ -121,5 +124,9 @@
 #include "src/scenes/TestTriangle.h"
 #include "src/scenes/SponzaCrytek.h"
 #include "src/scenes/PMTest.h"
+#include "src/scenes/Bunny.h"
+#include "src/scenes/UtahTeapot.h"
+#include "src/scenes/Dragon.h"
+#include "src/scenes/SanMiguel.h"
 
 #endif //PROJECT_HEADERS_H

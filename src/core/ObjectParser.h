@@ -40,31 +40,50 @@ public:
         // build material
         std::vector<std::shared_ptr<PBRMaterial>> mat_list;
         std::vector<std::shared_ptr<BumpMaterial>> bump_list;
+        std::unordered_map<std::string, std::shared_ptr<PBRMaterial>> cached_pbr_mats;
+        std::unordered_map<std::string, std::shared_ptr<BumpMaterial>> cached_bump_mats;
         for (const auto &mat: materials) {
-            mat_list.emplace_back(std::make_shared<PBRMaterial>(mat.name, mtl_path,
-                                                                Vector3d(mat.diffuse[0],
-                                                                         mat.diffuse[1],
-                                                                         mat.diffuse[2]),
-                                                                mat.diffuse_texname,
-                                                                Vector3d(mat.specular[0],
-                                                                         mat.specular[1],
-                                                                         mat.specular[2]),
-                                                                mat.shininess,
-                                                                mat.specular_texname,
-                                                                Vector3d(mat.emission[0],
-                                                                         mat.emission[1],
-                                                                         mat.emission[2]),
-                                                                mat.emissive_texname,
-                                                                mat.ior,
-                                                                Vector3d(mat.transmittance[0],
-                                                                         mat.transmittance[1],
-                                                                         mat.transmittance[2]),
-                                                                mat.dissolve,
-                                                                light_sample_probability,
-                                                                sun_dir));
-            bump_list.emplace_back(mat.bump_texname.empty() ? nullptr :
-                                   std::make_shared<BumpMaterial>(mtl_path, mat.bump_texname,
-                                                                  bump_map_type));
+            // parse pbr material
+            if (cached_pbr_mats.find(mat.name) != cached_pbr_mats.end()) {
+                mat_list.emplace_back(cached_pbr_mats[mat.name]);
+            } else {
+                auto new_pbr_mat = std::make_shared<PBRMaterial>(mat.name, mtl_path,
+                                                                 Vector3d(mat.diffuse[0],
+                                                                          mat.diffuse[1],
+                                                                          mat.diffuse[2]),
+                                                                 mat.diffuse_texname,
+                                                                 Vector3d(mat.specular[0],
+                                                                          mat.specular[1],
+                                                                          mat.specular[2]),
+                                                                 mat.shininess,
+                                                                 mat.specular_texname,
+                                                                 Vector3d(mat.emission[0],
+                                                                          mat.emission[1],
+                                                                          mat.emission[2]),
+                                                                 mat.emissive_texname,
+                                                                 mat.ior,
+                                                                 Vector3d(mat.transmittance[0],
+                                                                          mat.transmittance[1],
+                                                                          mat.transmittance[2]),
+                                                                 mat.dissolve,
+                                                                 light_sample_probability,
+                                                                 sun_dir);
+                mat_list.emplace_back(new_pbr_mat);
+                cached_pbr_mats.insert(std::make_pair(mat.name, new_pbr_mat));
+            }
+            // parse bump material
+            if (mat.bump_texname.empty()) {
+                bump_list.emplace_back(nullptr);
+            } else {
+                if (cached_bump_mats.find(mat.bump_texname) != cached_bump_mats.end()) {
+                    bump_list.emplace_back(cached_bump_mats[mat.bump_texname]);
+                } else {
+                    auto new_bump_mat = std::make_shared<BumpMaterial>(mtl_path, mat.bump_texname,
+                                                                       bump_map_type);
+                    bump_list.emplace_back(new_bump_mat);
+                    cached_bump_mats.insert(std::make_pair(mat.bump_texname, new_bump_mat));
+                }
+            }
         }
 
         // Loop over shapes

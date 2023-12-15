@@ -77,15 +77,15 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
     // integrator_type = use_photon_map();
     integrator_type = use_path_tracing();
     /**************************************************************/
-    if (integrator_type == 0) {
+    if (integrator_type == use_path_tracing()) {
         // World, camera and skybox
         // 1. Note that motion blur objects should be created with 0.0 - 1.0.
         //    Control motion blur with camera's shutter.
         // 2. use global_light_skybox if no other lights enabled
         /************************** Scene **************************/
-        HittableList world = sponza_crytek_scene();
-        SimpleCamera cam = sponza_crytek_camera(aspect_ratio);
-        auto skybox = sponza_crytek_skybox_cloudy();
+        HittableList world = san_miguel_scene();
+        SimpleCamera cam = san_miguel_camera_1(aspect_ratio);
+        auto skybox = san_miguel_skybox_2();
         /**********************************************************/
         BVHNode world_bvh(world, cam.shutter_open(), cam.shutter_close());
 
@@ -106,7 +106,7 @@ void render_scene(int current_id, int max_processes, const char *output_file) {
             auto end = time(nullptr);
             std::cerr << "loop time " << end - start << "s\n" << std::flush;
         }
-    } else if (integrator_type == 1) {
+    } else if (integrator_type == use_photon_map()) {
         // World, camera and skybox
         HittableList world = PM_test_scene();
         auto light = PM_test_light();
