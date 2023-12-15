@@ -99,7 +99,27 @@
 
 ![Sponza Crytek Sunny](results/sponza_crytek_sunny.jpg)
 
-## <font size="5"> 13. Photon Mapping Series </font>
+## <font size="5"> 13. Bunny </font>
+
+![Bunny](results/bunny.jpg)
+
+## <font size="5"> 14. Dragon </font>
+
+![Dragon](results/dragon.jpg)
+
+## <font size="5"> 15. Utah Teapot </font>
+
+![Utah_Teapot](results/utah_teapot.jpg)
+
+## <font size="5"> 16. San Miguel Series </font>
+
+![San_Miguel_1](results/san_miguel_1.jpg)
+
+![San_Miguel_2](results/san_miguel_2.jpg)
+
+![San_Miguel_3](results/san_miguel_3.jpg)
+
+## <font size="5"> 17. Photon Mapping Series </font>
 <font size="4"> A bunny rendered using Photon Mapping. When rendering the first image, photon tracing depth is set to one so that the caustic effect can be seen clearly. The correct effect is shown in the second image. </font>
 
 ![Photon Mapping Bunny Caustic](results/photon_mapping_bunny_caustic.jpg)
